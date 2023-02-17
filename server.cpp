@@ -199,7 +199,36 @@ void httpServer::serverListen( std::string port ) {
 }
 
 httpServer::~httpServer() {
+    closesocket(listenSocket);
+    WSACleanup();
+}
 
+void readRequest( void * threadData ) {
+        struct threadData * threadInfo = ( (struct threadData * )threadData );
+
+        int buffSize = 200;
+        char * recBuf = (char *) malloc(sizeof(char) * buffSize);
+        int bytesRecieved = 200;
+
+        while( bytesRecieved >= buffSize) {
+            buffSize += 10;
+            recBuf = (char *) realloc(recBuf, sizeof(char) * buffSize);
+            bytesRecieved = recv( threadInfo->client, recBuf, buffSize, MSG_PEEK );
+        }
+
+        buffSize = bytesRecieved;
+        if( realloc( recBuf, sizeof(char) * buffSize) == NULL) {
+            printf("failed to update size of buffer canceling request\n");
+            closesocket( threadInfo->client );
+            return;
+        }
+
+        bytesRecieved = recv( threadInfo->client, recBuf, buffSize, 0);
+
+        threadInfo->data = recBuf;
+        threadInfo->size = bytesRecieved;
+
+        parseRequest( threadInfo );
 }
 
 void parseRequest( void * threadData ) {
@@ -229,36 +258,8 @@ void parseRequest( void * threadData ) {
 
     int error = closesocket( threadInfo->client );
     if(error == SOCKET_ERROR) {
-        printf("failed to close the damn socket\n");
+        printf("failed to close the socket\n");
     }
     printf("closed socket\n");
 
-}
-
-void readRequest( void * threadData ) {
-        struct threadData * threadInfo = ( (struct threadData * )threadData );
-
-        int buffSize = 200;
-        char * recBuf = (char *) malloc(sizeof(char) * buffSize);
-        int bytesRecieved = 200;
-
-        while( bytesRecieved >= buffSize) {
-            buffSize += 10;
-            recBuf = (char *) realloc(recBuf, sizeof(char) * buffSize);
-            bytesRecieved = recv( threadInfo->client, recBuf, buffSize, MSG_PEEK );
-        }
-
-        buffSize = bytesRecieved;
-        if( realloc( recBuf, sizeof(char) * buffSize) == NULL) {
-            printf("failed to update size of buffer canceling request\n");
-            closesocket( threadInfo->client );
-            return;
-        }
-
-        bytesRecieved = recv( threadInfo->client, recBuf, buffSize, 0);
-
-        threadInfo->data = recBuf;
-        threadInfo->size = bytesRecieved;
-
-        parseRequest( threadInfo );
 }
