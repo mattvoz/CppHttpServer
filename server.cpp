@@ -39,8 +39,6 @@ struct addrinfo * getSocketAddressInfo( PCSTR port ) {
 httpRequest::httpRequest( char * req, int reqSize ) {
     rawRequest = std::string(req, reqSize);
 
-    std::cout << rawRequest;
-
     std::stringstream stream(rawRequest);
 
     stream >> requestType;
@@ -56,7 +54,6 @@ httpRequest::httpRequest( char * req, int reqSize ) {
 
     while( std::getline( stream, currentLine ) ) {
         if( currentLine == "\r" ){
-            printf("end of headers\n");
             break;
         }
         std::string key;
@@ -70,8 +67,66 @@ httpRequest::httpRequest( char * req, int reqSize ) {
 }
 
 httpRequest::~httpRequest() {
-    delete &headers;
 }
+
+httpResponse::httpResponse( SOCKET recipient ) {
+    this->target = recipient;
+}
+
+void httpResponse::sendResponse() {
+    std::string response;
+
+    response += "HTTP/1.1 ";
+    int status = atoi( this->statusCode.c_str() );
+    if( 200 <= status && status < 300) {
+        response += this->statusCode + " OK";
+    } else if( 300 <= status && status < 400) {
+        response += this->statusCode + " REDIRECT";
+    } else if( 400 <= status && status < 500) {
+        response += this->statusCode + " BAD REQUEST";
+    } else if( 500 <= status ) {
+        response += this->statusCode + " INTERNAL SERVER ERROR";
+    }
+
+    response += "\n\r";
+
+
+    send( this->target, response.c_str(), response.size(), 0);
+};
+
+void httpResponse::addHeader( std::string key, std::string value) {
+
+}
+
+void httpResponse::setStatus( int status ) {
+    if(  600 < status ||  100 > status ) {
+        printf("status isn't a proper status setting to 200 by default\n");
+        this->statusCode = "200";
+        return;
+    }
+
+    this->statusCode = std::to_string(status);
+
+}
+
+void httpResponse::setStatus( std::string status ){
+
+    int statusInt = atoi( status.c_str() );
+
+    if(  600 < statusInt ||  100 > statusInt ) {
+        printf("status isn't a proper status setting to 200 by default\n");
+        this->statusCode = "200";
+        return;
+    }
+
+    this->statusCode = status;
+
+}
+
+httpResponse::~httpResponse() {
+    
+}
+
 
 httpServer::httpServer() {
     listenSocket = INVALID_SOCKET;
@@ -117,14 +172,6 @@ void httpServer::serverListen( std::string port ) {
     this->prepSocket(port);
 
     while(true) {
-        int buffSize = 200;
-        char * recBuf = (char *) malloc(sizeof(char) * buffSize);
-
-        if( recBuf == NULL) {
-            printf("failed to allocate buffer for connection skipping");
-            continue;
-        }
-
         printf("awaiting connection \n");
         SOCKET clientSock = INVALID_SOCKET;
 
@@ -133,37 +180,21 @@ void httpServer::serverListen( std::string port ) {
 
         clientSock = accept(listenSocket, (sockaddr *) &from, &fromlen);
 
-        if(clientSock == INVALID_SOCKET) {
+        if( clientSock == INVALID_SOCKET) {
             printf("failed to accept connection to socket\n");
             closesocket(listenSocket);
             WSACleanup();
             exit(1);
         }
 
-        int bytesRecieved = 200;
-
-        while( bytesRecieved >= buffSize) {
-            buffSize += 10;
-            recBuf = (char *) realloc(recBuf, sizeof(char) * buffSize);
-            bytesRecieved = recv(clientSock, recBuf, buffSize, MSG_PEEK);
-        }
-
-        buffSize = bytesRecieved;
-        if( realloc( recBuf, sizeof(char) * buffSize) == NULL) {
-            printf("failed to update size of buffer canceling request");
-            closesocket( clientSock );
-        }
-
-        bytesRecieved = recv(clientSock, recBuf, buffSize, 0);
-
         struct threadData * data = new threadData();
 
-        data->data = recBuf;
-        data->size = buffSize;
+        data->data = NULL;
+        data->size = NULL;
         data->client = clientSock;
         data->server = this;
 
-        CreateThread( 0, 0, (LPTHREAD_START_ROUTINE) &parseRequest, data, 0, NULL);
+        CreateThread( 0, 0, (LPTHREAD_START_ROUTINE) &readRequest, data, 0, NULL);
     }
 }
 
@@ -171,43 +202,63 @@ httpServer::~httpServer() {
 
 }
 
-void httpServer::parseRequest( void * threadData ) {
-    struct threadData * threadInfo = ((struct threadData * )threadData);
+void parseRequest( void * threadData ) {
+    struct threadData * threadInfo = ( (struct threadData * )threadData );
     int size = threadInfo->size;
 
     char type[5];
     char path[100];
     char version[20];
-    sscanf(threadInfo->data, "%s %s %s", type, path, version);
+    sscanf( threadInfo->data, "%s %s %s", type, path, version );
 
-    printf("making request object\n");
-    httpRequest * req = new httpRequest( threadInfo->data, threadInfo->size);
-    printf("finished request object\n");
+    httpRequest * req = new httpRequest( threadInfo->data, threadInfo->size );
 
-    if( strcmp(type, "GET") != 0 && strcmp(type, "POST") != 0 && strcmp(type,"PUT") != 0 && strcmp(type, "DELETE") != 0 ) {
-        printf("unrecognized http type closing socket\n");
-        closesocket(threadInfo->client);
-        return;
-    }
 
-    std::string tmpstr(threadInfo->data, threadInfo->size);
+    std::string tmpstr( threadInfo->data, threadInfo->size );
 
-    std::stringstream requestStream = std::stringstream(tmpstr);
+    std::stringstream requestStream = std::stringstream( tmpstr );
     std::string currentLine;
 
-    //Clear the GET / 
-    std::getline( requestStream, currentLine );
+    httpResponse * res = new httpResponse( threadInfo->client );
 
-    while( std::getline( requestStream, currentLine ) ) {
-        if( currentLine == "\r" ){
-            printf("end of headers\n");
-            break;
-        }
-        std::string key,value;
-        std::stringstream tmpStream = std::stringstream(currentLine);
-        std::getline( tmpStream, key, ':');
-        std::getline( tmpStream, value);
+    res->setStatus(200);
+
+    res->sendResponse();
+
+    printf("%d\n", threadInfo->client);
+
+    int error = closesocket( threadInfo->client );
+    if(error == SOCKET_ERROR) {
+        printf("failed to close the damn socket\n");
     }
-    closesocket( threadInfo->client );
-    printf("closed socket");
+    printf("closed socket\n");
+
+}
+
+void readRequest( void * threadData ) {
+        struct threadData * threadInfo = ( (struct threadData * )threadData );
+
+        int buffSize = 200;
+        char * recBuf = (char *) malloc(sizeof(char) * buffSize);
+        int bytesRecieved = 200;
+
+        while( bytesRecieved >= buffSize) {
+            buffSize += 10;
+            recBuf = (char *) realloc(recBuf, sizeof(char) * buffSize);
+            bytesRecieved = recv( threadInfo->client, recBuf, buffSize, MSG_PEEK );
+        }
+
+        buffSize = bytesRecieved;
+        if( realloc( recBuf, sizeof(char) * buffSize) == NULL) {
+            printf("failed to update size of buffer canceling request\n");
+            closesocket( threadInfo->client );
+            return;
+        }
+
+        bytesRecieved = recv( threadInfo->client, recBuf, buffSize, 0);
+
+        threadInfo->data = recBuf;
+        threadInfo->size = bytesRecieved;
+
+        parseRequest( threadInfo );
 }

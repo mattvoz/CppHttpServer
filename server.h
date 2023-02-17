@@ -149,10 +149,22 @@ class httpRequest {
 		std::string rawRequest;
 };
 
-class httpResponse{
+class httpResponse {
 	public:
+		httpResponse( SOCKET recipient );
+		~httpResponse();
 
+		void setStatus(int);
+		void setStatus(std::string);
+		void addHeader( std::string key, std::string value);
+		void sendResponse();
+
+		hashTable<std::string> headers = hashTable<std::string>(50);
 	private:
+		SOCKET target;
+		std::string statusCode;
+		std::string body;
+		FILE * files;
 
 };
 
@@ -181,9 +193,10 @@ class httpServer {
 		void findRoute();
 		SOCKET listenSocket;
 		void prepSocket( std::string port );
-		static void parseRequest( void * threadData );
-
 
 };
+
+void readRequest( void * threadData );
+void parseRequest( void * threadData );
 
 #endif
