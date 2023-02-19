@@ -7,5 +7,9 @@ int main(int argc, char ** argv) {
 
     std::string testString = "ahhhhh\n";
 
+    x.add("hi", testString);
+
+    printf("%s\n", x["hi"]->c_str());
+
     serv.serverListen("27015");
 }

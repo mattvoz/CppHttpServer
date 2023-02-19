@@ -57,10 +57,10 @@ httpRequest::httpRequest( char * req, int reqSize ) {
             break;
         }
         std::string key;
-        std::string * value = new std::string();
+        std::string value;
         std::stringstream tmpStream = std::stringstream(currentLine);
         std::getline( tmpStream, key, ':');
-        std::getline( tmpStream, *value);
+        std::getline( tmpStream, value);
         headers.add( key, value );
     }
 
@@ -88,15 +88,13 @@ void httpResponse::sendResponse() {
         response += this->statusCode + " INTERNAL SERVER ERROR";
     }
 
+    headers.add("Content-Type", "text/html");
+
     response += "\n\r";
 
 
     send( this->target, response.c_str(), response.size(), 0);
 };
-
-void httpResponse::addHeader( std::string key, std::string value) {
-
-}
 
 void httpResponse::setStatus( int status ) {
     if(  600 < status ||  100 > status ) {

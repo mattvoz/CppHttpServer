@@ -45,11 +45,12 @@ class hashTable {
 			}
 		};
 
-		void add( std::string key, T* value) {
+		void add( std::string key, T value) {
 			int pos = stringHashFunction(key, size);
 			hashContainer<T> * newVal = new struct hashContainer<T>();
 			newVal->key = key.c_str();
-			newVal->value = value;
+			newVal->value = new T();
+			*(newVal->value) = value;
 			newVal->next = NULL;
 
 			hashContainer<T> * tmp = values[pos];
@@ -61,7 +62,7 @@ class hashTable {
 
 			if( tmp->key == key ) {
 				delete newVal;
-				tmp->value = value;
+				*(tmp->value) = value;
 				return;
 			}
 
@@ -69,7 +70,7 @@ class hashTable {
 				tmp = tmp->next;
 				if( tmp->key == key ) {
 					delete newVal;
-					tmp->value = value;
+					*(tmp->value) = value;
 					return;
 				}
 			}
@@ -139,9 +140,10 @@ class JSONObject{
 
 class httpRequest {
 	public:
-		hashTable<std::string> headers = hashTable<std::string>(50);
 		httpRequest( char * req, int reqSize);
 		~httpRequest();
+
+		hashTable<std::string> headers = hashTable<std::string>(50);
 	private:
 		std::string requestType;
 		std::string httpVersion;
@@ -156,7 +158,6 @@ class httpResponse {
 
 		void setStatus(int);
 		void setStatus(std::string);
-		void addHeader( std::string key, std::string value);
 		void sendResponse();
 
 		hashTable<std::string> headers = hashTable<std::string>(50);
