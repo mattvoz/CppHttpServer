@@ -73,20 +73,37 @@ httpResponse::httpResponse( SOCKET recipient ) {
     this->target = recipient;
 }
 
+void httpResponse::appendStatus( std::string * response ) {
+    int status = atoi( this->statusCode.c_str() );
+    if( 200 <= status && status < 300) {
+        switch(status){
+            case 201:
+                *response += this->statusCode + "CREATED";
+            case 202:
+                *response += this->statusCode + "Accepted";
+            case 203:
+                *response += this->statusCode + "Non-Authoritative Information";
+                break;
+            case 204:
+                *response += this->statusCode + "No Content";
+            default:
+                *response += this->statusCode + "OK";
+        };
+    } else if( 300 <= status && status < 400) {
+        *response += this->statusCode + " REDIRECT";
+    } else if( 400 <= status && status < 500) {
+        *response += this->statusCode + " BAD REQUEST";
+    } else if( 500 <= status ) {
+        *response += this->statusCode + " INTERNAL SERVER ERROR";
+    }
+}
+
 void httpResponse::sendResponse() {
     std::string response;
 
     response += "HTTP/1.1 ";
-    int status = atoi( this->statusCode.c_str() );
-    if( 200 <= status && status < 300) {
-        response += this->statusCode + " OK";
-    } else if( 300 <= status && status < 400) {
-        response += this->statusCode + " REDIRECT";
-    } else if( 400 <= status && status < 500) {
-        response += this->statusCode + " BAD REQUEST";
-    } else if( 500 <= status ) {
-        response += this->statusCode + " INTERNAL SERVER ERROR";
-    }
+
+    appendStatus( &response );
 
     headers.add("Content-Type", "text/html");
 
@@ -96,8 +113,8 @@ void httpResponse::sendResponse() {
     send( this->target, response.c_str(), response.size(), 0);
 };
 
-void httpResponse::setStatus( int status ) {
-    if(  600 < status ||  100 > status ) {
+void httpResponse::setStatus( unsigned int status ) {
+    if(  600 > status ) {
         printf("status isn't a proper status setting to 200 by default\n");
         this->statusCode = "200";
         return;
@@ -109,9 +126,9 @@ void httpResponse::setStatus( int status ) {
 
 void httpResponse::setStatus( std::string status ){
 
-    int statusInt = atoi( status.c_str() );
+    unsigned int statusInt = atoi( status.c_str() );
 
-    if(  600 < statusInt ||  100 > statusInt ) {
+    if(  600 > statusInt ) {
         printf("status isn't a proper status setting to 200 by default\n");
         this->statusCode = "200";
         return;

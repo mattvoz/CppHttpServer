@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
+#include <any>
+
+enum responseType { JSON, FILE, GIF, PNG, javaArchive, };
 
 static int stringHashFunction( std::string key, int tablesize ) {
 	int total = 0;
@@ -134,6 +137,10 @@ class JSONObject{
 		JSONObject();
 		JSONObject(std::string object);
 		JSONObject( char * , int objectSize);
+
+		std::string toString();
+
+		hashContainer<std::any> data;
 	private:
 
 };
@@ -156,16 +163,20 @@ class httpResponse {
 		httpResponse( SOCKET recipient );
 		~httpResponse();
 
-		void setStatus(int);
+		void setStatus( unsigned int);
 		void setStatus(std::string);
+		void JSON();
+		void sendFile();
 		void sendResponse();
+		void appendStatus( std::string * response );
 
 		hashTable<std::string> headers = hashTable<std::string>(50);
 	private:
 		SOCKET target;
 		std::string statusCode;
 		std::string body;
-		FILE * files;
+		responseType type;
+		FILE ** file;
 
 };
 
