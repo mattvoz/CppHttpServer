@@ -10,7 +10,7 @@
 #include <vector>
 #include <any>
 
-enum responseType { JSON, FILE, GIF, PNG, javaArchive, };
+enum responseType { JSON, FileResponse, GIF, PNG, javaArchive, };
 
 static int stringHashFunction( std::string key, int tablesize ) {
 	int total = 0;
@@ -99,6 +99,17 @@ class hashTable {
 			
 			return NULL;
 		};
+
+		std::string toString() {
+			static std::string response = "";
+			for( int i = 0; i < size; i++ ) {
+				hashContainer<T> * current = values[i];
+				while( current != NULL ) {
+					response += current->key + ":" + current->value + "\n";
+					current = current->next;
+				}
+			}
+		}
 		~hashTable() {
 			for(int i = 0; i < size; i++) {
 				struct hashContainer<T> * cur = values[i];
@@ -132,6 +143,9 @@ class Router {
 	private:
 };
 
+/**
+ * Uses a hashtable of std::any to store values so casts are required with std::cast_any
+*/
 class JSONObject{
 	public:
 		JSONObject();
@@ -151,6 +165,7 @@ class httpRequest {
 		~httpRequest();
 
 		hashTable<std::string> headers = hashTable<std::string>(50);
+		hashTable<std::string> searchParams = hashTable<std::string>(20);
 	private:
 		std::string requestType;
 		std::string httpVersion;
@@ -210,5 +225,6 @@ class httpServer {
 
 void readRequest( void * threadData );
 void parseRequest( void * threadData );
+void parseQueryParams( std::stringstream pathString, hashTable<std::string> queryParams );
 
 #endif

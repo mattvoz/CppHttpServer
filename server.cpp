@@ -1,7 +1,6 @@
 #include "server.h"
 #include <stdio.h>
 #include <iostream>
-#include <iostream>
 #include <sstream>
 #include<string>
 
@@ -42,7 +41,15 @@ httpRequest::httpRequest( char * req, int reqSize ) {
     std::stringstream stream(rawRequest);
 
     stream >> requestType;
-    stream >> path;
+
+    std::string tmpPathAndQueries;
+    std::getline( stream, tmpPathAndQueries );
+
+    std::stringstream queryStream(tmpPathAndQueries);
+
+    std::getline( queryStream, this->path, '?');
+
+
     stream >> httpVersion;
 
     std::cout << requestType << "\n" << path << "\n" << httpVersion << "\n";
@@ -75,27 +82,54 @@ httpResponse::httpResponse( SOCKET recipient ) {
 
 void httpResponse::appendStatus( std::string * response ) {
     int status = atoi( this->statusCode.c_str() );
+    if( 100 <= status && status < 200 ) {
+        switch(status) {
+            case 101:
+                *response += this->statusCode + " Switching Protocols";
+                break;
+            case 102:
+                *response += this->statusCode + " Processing";
+            default:
+                *response += this->statusCode + "Continue";
+        }
+    }
     if( 200 <= status && status < 300) {
-        switch(status){
+        switch( status ){
             case 201:
-                *response += this->statusCode + "CREATED";
+                *response += this->statusCode + " CREATED";
             case 202:
-                *response += this->statusCode + "Accepted";
+                *response += this->statusCode + " Accepted";
             case 203:
-                *response += this->statusCode + "Non-Authoritative Information";
+                *response += this->statusCode + " Non-Authoritative Information";
                 break;
             case 204:
-                *response += this->statusCode + "No Content";
+                *response += this->statusCode + " No Content";
+            case 205:
+                *response += this->statusCode + " Reset Content";
+            case 206:
+                *response += this->statusCode + " Partial Content";
+            case 207:
+                *response += this->statusCode + " Multi-Status";
+            case 208:
+                *response += this->statusCode + "Already Reported";
             default:
-                *response += this->statusCode + "OK";
+                *response += this->statusCode + " OK";
         };
     } else if( 300 <= status && status < 400) {
-        *response += this->statusCode + " REDIRECT";
+        switch( status ) {
+            case 300:
+                *response += this->statusCode += " Multiple Choices";
+                break;
+            default:
+                *response += this->statusCode += " Redirect";
+        }
     } else if( 400 <= status && status < 500) {
         *response += this->statusCode + " BAD REQUEST";
     } else if( 500 <= status ) {
         *response += this->statusCode + " INTERNAL SERVER ERROR";
     }
+
+    *response += "\n";
 }
 
 void httpResponse::sendResponse() {
@@ -105,16 +139,16 @@ void httpResponse::sendResponse() {
 
     appendStatus( &response );
 
-    headers.add("Content-Type", "text/html");
+    headers.add("Content-Type", "text/html\n");
 
-    response += "\n\r";
+    response += "\r";
 
 
     send( this->target, response.c_str(), response.size(), 0);
 };
 
 void httpResponse::setStatus( unsigned int status ) {
-    if(  600 > status ) {
+    if(  600 < status ) {
         printf("status isn't a proper status setting to 200 by default\n");
         this->statusCode = "200";
         return;
@@ -128,7 +162,7 @@ void httpResponse::setStatus( std::string status ){
 
     unsigned int statusInt = atoi( status.c_str() );
 
-    if(  600 > statusInt ) {
+    if(  600 < statusInt ) {
         printf("status isn't a proper status setting to 200 by default\n");
         this->statusCode = "200";
         return;
@@ -265,11 +299,9 @@ void parseRequest( void * threadData ) {
 
     httpResponse * res = new httpResponse( threadInfo->client );
 
-    res->setStatus(200);
+    res->setStatus(300);
 
     res->sendResponse();
-
-    printf("%d\n", threadInfo->client);
 
     int error = closesocket( threadInfo->client );
     if(error == SOCKET_ERROR) {
@@ -277,4 +309,10 @@ void parseRequest( void * threadData ) {
     }
     printf("closed socket\n");
 
+}
+
+void parseQueryParams( std::stringstream pathString, hashTable<std::string> queryParams ) {
+    std::string var;
+    std::string prevValue;
+    std::getline( pathString, var );
 }
