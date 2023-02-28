@@ -43,16 +43,18 @@ httpRequest::httpRequest( char * req, int reqSize ) {
     stream >> requestType;
 
     std::string tmpPathAndQueries;
-    std::getline( stream, tmpPathAndQueries );
 
-    std::stringstream queryStream(tmpPathAndQueries);
-
-    std::getline( queryStream, this->path, '?');
-
+    stream >> tmpPathAndQueries;
 
     stream >> httpVersion;
 
-    std::cout << requestType << "\n" << path << "\n" << httpVersion << "\n";
+    std::stringstream queryStream = std::stringstream(tmpPathAndQueries);
+
+    std::getline( queryStream, this->path, '?');
+
+    parseQueryParams( queryStream, &queryParams);
+
+    stream >> httpVersion;
 
     std::string currentLine;
 
@@ -221,7 +223,6 @@ void httpServer::serverListen( std::string port ) {
     this->prepSocket(port);
 
     while(true) {
-        printf("awaiting connection \n");
         SOCKET clientSock = INVALID_SOCKET;
 
         sockaddr_in from;
@@ -311,8 +312,21 @@ void parseRequest( void * threadData ) {
 
 }
 
-void parseQueryParams( std::stringstream pathString, hashTable<std::string> queryParams ) {
-    std::string var;
-    std::string prevValue;
-    std::getline( pathString, var );
+void parseQueryParams( std::stringstream & pathString, hashTable<std::string> * queryParams ) {
+    if( pathString.eof() ) {
+        return;
+    }
+    std::string curValue;
+    while( ! pathString.eof() ) {
+        std::string tmpKey;
+        std::string tmpVal;
+        //get line for query Param;
+        std::getline( pathString, tmpKey, '=' );
+        //Store the key into key
+        std::getline( pathString, tmpVal, '&');
+
+        queryParams->add( tmpKey, tmpVal );
+    }
+
+    return;
 }

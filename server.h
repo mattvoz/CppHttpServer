@@ -165,7 +165,7 @@ class httpRequest {
 		~httpRequest();
 
 		hashTable<std::string> headers = hashTable<std::string>(50);
-		hashTable<std::string> searchParams = hashTable<std::string>(20);
+		hashTable<std::string> queryParams = hashTable<std::string>(20);
 	private:
 		std::string requestType;
 		std::string httpVersion;
@@ -225,6 +225,6 @@ class httpServer {
 
 void readRequest( void * threadData );
 void parseRequest( void * threadData );
-void parseQueryParams( std::stringstream pathString, hashTable<std::string> queryParams );
+void parseQueryParams( std::stringstream & pathString, hashTable<std::string>* queryParams );
 
 #endif
