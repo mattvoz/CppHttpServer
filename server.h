@@ -101,15 +101,17 @@ class hashTable {
 		};
 
 		std::string toString() {
-			static std::string response = "";
+			static std::string response = std::string();
 			for( int i = 0; i < size; i++ ) {
 				hashContainer<T> * current = values[i];
 				while( current != NULL ) {
-					response += current->key + ":" + current->value + "\n";
+					response += current->key + ":" + * current->value + "\n";
 					current = current->next;
 				}
 			}
+			return response;
 		}
+
 		~hashTable() {
 			for(int i = 0; i < size; i++) {
 				struct hashContainer<T> * cur = values[i];
@@ -184,6 +186,8 @@ class httpResponse {
 		void sendFile();
 		void sendResponse();
 		void appendStatus( std::string * response );
+
+		int getStatus();
 
 		hashTable<std::string> headers = hashTable<std::string>(50);
 	private:

@@ -156,9 +156,13 @@ void httpResponse::sendResponse() {
     appendStatus( &response );
 
     headers.add("Content-Type", "text/html\n");
+    headers.add("Content-Length", "2");
 
-    response += "\r";
+    response += headers.toString();
 
+    response += "hi";
+
+    std::cout << response;
 
     send( this->target, response.c_str(), response.size(), 0);
 };
@@ -314,7 +318,7 @@ void parseRequest( void * threadData ) {
 
     httpResponse * res = new httpResponse( threadInfo->client );
 
-    res->setStatus(300);
+    res->setStatus(200);
 
     res->sendResponse();
 
