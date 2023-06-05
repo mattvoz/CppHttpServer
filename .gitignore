@@ -1,2 +1,4 @@
 main.exe
 server.o
+*.o
+*.exe

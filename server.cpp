@@ -35,63 +35,6 @@ struct addrinfo * getSocketAddressInfo( PCSTR port ) {
     return addrResult;
 }
 
-httpRequest::httpRequest( char * req, int reqSize ) {
-    rawRequest = std::string(req, reqSize);
-
-    std::stringstream stream(rawRequest);
-
-    stream >> requestType;
-
-    std::string tmpPathAndQueries;
-
-    stream >> tmpPathAndQueries;
-
-    stream >> httpVersion;
-
-    std::stringstream queryStream = std::stringstream(tmpPathAndQueries);
-
-    std::getline( queryStream, this->path, '?');
-
-    parseQueryParams( queryStream, &queryParams);
-
-    stream >> httpVersion;
-
-    std::string currentLine;
-
-    //Clear the first line :)
-    std::getline( stream, currentLine );
-
-    // Have a max headers size otherwise it will be rediculous.
-    int maxHeaders = 1000;
-
-    while( maxHeaders > 0) {
-        //Check headers have ended;
-        if( currentLine == "\r" ){
-            break;
-        }
-        std::string key;
-        std::string value;
-        std::stringstream tmpStream = std::stringstream(currentLine);
-        std::getline( tmpStream, key, ':');
-        std::getline( tmpStream, value);
-        headers.add( key, value );
-
-        std::getline( stream, currentLine );
-        maxHeaders--;
-    }
-
-    // ignore all headers over 1000
-    while( currentLine != "\r" ) {
-        std::getline( stream, currentLine );
-    }
-
-    //TODO body parser class
-
-}
-
-httpRequest::~httpRequest() {
-}
-
 httpResponse::httpResponse( SOCKET recipient ) {
     this->target = recipient;
 }
@@ -161,8 +104,6 @@ void httpResponse::sendResponse() {
     response += headers.toString();
 
     response += "hi";
-
-    std::cout << response;
 
     send( this->target, response.c_str(), response.size(), 0);
 };
@@ -271,17 +212,32 @@ httpServer::~httpServer() {
     WSACleanup();
 }
 
+
+//TODO change to non blocking socket
 void readRequest( void * threadData ) {
         struct threadData * threadInfo = ( (struct threadData * )threadData );
 
-        int buffSize = 200;
+        int buffSize = 1000;
         char * recBuf = (char *) malloc(sizeof(char) * buffSize);
-        int bytesRecieved = 200;
+        int bytesRecieved = 1000;
+
+        /*
+        u_long mode = 1;
+        ioctlsocket(threadInfo->client, FIONBIO, &mode);
+        */
 
         while( bytesRecieved >= buffSize) {
-            buffSize += 10;
+            buffSize += 2;
             recBuf = (char *) realloc(recBuf, sizeof(char) * buffSize);
+            if( recBuf == NULL ) {
+                closesocket( threadInfo->client );
+                return;
+            }
             bytesRecieved = recv( threadInfo->client, recBuf, buffSize, MSG_PEEK );
+            printf("%s\n", recBuf);
+            if( strstr(recBuf, "\r\n\r\n") != NULL ) {
+                
+            }
         }
 
         buffSize = bytesRecieved;
