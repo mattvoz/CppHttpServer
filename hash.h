@@ -1,6 +1,8 @@
 #ifndef __HASHING__
 #define __HASHING__
 
+#include <string>
+
 inline int stringHashFunction( std::string key, int tablesize ) {
 	int total = 0;
 	int shift = key.length() % 2 == 0 ? 1 : 2;
@@ -90,15 +92,17 @@ class hashTable {
 		};
 
 		std::string toString() {
-			static std::string response = std::string();
+			std::string headers = std::string();
 			for( int i = 0; i < size; i++ ) {
-				hashContainer<T> * current = values[i];
+				hashContainer<std::string> * current = values[i];
 				while( current != NULL ) {
-					response += current->key + ":" + * current->value + "\n";
+					headers += current->key + ":" + * current->value + "\r\n";
 					current = current->next;
 				}
 			}
-			return response;
+			headers += "\r\n";
+			printf("%s", headers.c_str());
+			return headers;
 		}
 
 		~hashTable() {

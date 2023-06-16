@@ -35,108 +35,6 @@ struct addrinfo * getSocketAddressInfo( PCSTR port ) {
     return addrResult;
 }
 
-httpResponse::httpResponse( SOCKET recipient ) {
-    this->target = recipient;
-}
-
-void httpResponse::appendStatus( std::string * response ) {
-    int status = atoi( this->statusCode.c_str() );
-    if( 100 <= status && status < 200 ) {
-        switch(status) {
-            case 101:
-                *response += this->statusCode + " Switching Protocols";
-                break;
-            case 102:
-                *response += this->statusCode + " Processing";
-            default:
-                *response += this->statusCode + "Continue";
-        }
-    }
-    if( 200 <= status && status < 300) {
-        switch( status ){
-            case 201:
-                *response += this->statusCode + " CREATED";
-            case 202:
-                *response += this->statusCode + " Accepted";
-            case 203:
-                *response += this->statusCode + " Non-Authoritative Information";
-                break;
-            case 204:
-                *response += this->statusCode + " No Content";
-            case 205:
-                *response += this->statusCode + " Reset Content";
-            case 206:
-                *response += this->statusCode + " Partial Content";
-            case 207:
-                *response += this->statusCode + " Multi-Status";
-            case 208:
-                *response += this->statusCode + "Already Reported";
-            default:
-                *response += this->statusCode + " OK";
-        };
-    } else if( 300 <= status && status < 400) {
-        switch( status ) {
-            case 300:
-                *response += this->statusCode += " Multiple Choices";
-                break;
-            default:
-                *response += this->statusCode += " Redirect";
-        }
-    } else if( 400 <= status && status < 500) {
-        *response += this->statusCode + " BAD REQUEST";
-    } else if( 500 <= status ) {
-        *response += this->statusCode + " INTERNAL SERVER ERROR";
-    }
-
-    *response += "\n";
-}
-
-void httpResponse::sendResponse() {
-    std::string response;
-
-    response += "HTTP/1.1 ";
-
-    appendStatus( &response );
-
-    headers.add("Content-Type", "text/html\n");
-    headers.add("Content-Length", "2");
-
-    response += headers.toString();
-
-    response += "hi";
-
-    send( this->target, response.c_str(), response.size(), 0);
-};
-
-void httpResponse::setStatus( unsigned int status ) {
-    if(  600 < status ) {
-        printf("status isn't a proper status setting to 200 by default\n");
-        this->statusCode = "200";
-        return;
-    }
-
-    this->statusCode = std::to_string(status);
-
-}
-
-void httpResponse::setStatus( std::string status ){
-
-    unsigned int statusInt = atoi( status.c_str() );
-
-    if(  600 < statusInt ) {
-        printf("status isn't a proper status setting to 200 by default\n");
-        this->statusCode = "200";
-        return;
-    }
-
-    this->statusCode = status;
-
-}
-
-httpResponse::~httpResponse() {
-    
-}
-
 
 httpServer::httpServer() {
     listenSocket = INVALID_SOCKET;
@@ -217,9 +115,9 @@ httpServer::~httpServer() {
 void readRequest( void * threadData ) {
         struct threadData * threadInfo = ( (struct threadData * )threadData );
 
-        int buffSize = 1000;
+        long buffSize = 1000;
         char * recBuf = (char *) malloc(sizeof(char) * buffSize);
-        int bytesRecieved = 1000;
+        long bytesRecieved = 1000;
 
         /*
         u_long mode = 1;
@@ -233,10 +131,11 @@ void readRequest( void * threadData ) {
                 closesocket( threadInfo->client );
                 return;
             }
-            bytesRecieved = recv( threadInfo->client, recBuf, buffSize, MSG_PEEK );
-            printf("%s\n", recBuf);
-            if( strstr(recBuf, "\r\n\r\n") != NULL ) {
-                
+            recv( threadInfo->client, recBuf, buffSize, MSG_PEEK );
+            char * address;
+            if( ( address = strstr(recBuf, "\r\n\r\n") ) != NULL || ( address = strstr(recBuf, "\n\n") ) ) {
+                buffSize = (long) (address - recBuf);
+                break;
             }
         }
 
@@ -282,25 +181,5 @@ void parseRequest( void * threadData ) {
     if(error == SOCKET_ERROR) {
         printf("failed to close the socket\n");
     }
-    printf("closed socket\n");
 
-}
-
-void parseQueryParams( std::stringstream & pathString, hashTable<std::string> * queryParams ) {
-    if( pathString.eof() ) {
-        return;
-    }
-    std::string curValue;
-    while( ! pathString.eof() ) {
-        std::string tmpKey;
-        std::string tmpVal;
-        //get line for query Param;
-        std::getline( pathString, tmpKey, '=' );
-        //Store the key into key
-        std::getline( pathString, tmpVal, '&');
-
-        queryParams->add( tmpKey, tmpVal );
-    }
-
-    return;
 }

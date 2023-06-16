@@ -45,10 +45,7 @@ httpRequest::httpRequest( char * requestHeaders, int headersSize ) {
     //Clear the first line :)
     std::getline( stream, currentLine );
 
-    // Have a max headers size otherwise it will be rediculous.
-    int maxHeaders = 1000;
-
-    while( maxHeaders > 0) {
+    while( !stream.eof() ) {
         //Check headers have ended;
         if( currentLine == "\r" ){
             break;
@@ -61,7 +58,6 @@ httpRequest::httpRequest( char * requestHeaders, int headersSize ) {
         headers.add( key, value );
 
         std::getline( stream, currentLine );
-        maxHeaders--;
     }
 
     // ignore all headers over 1000
@@ -70,6 +66,10 @@ httpRequest::httpRequest( char * requestHeaders, int headersSize ) {
     }
 
     //TODO body parser class
+
+}
+
+void httpRequest::parseHeaders() {
 
 }
 

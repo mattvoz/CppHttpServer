@@ -72,7 +72,7 @@ class httpResponse {
 
 struct threadData {
 	char * data;
-	int size;
+	long size;
 	SOCKET client;
 	httpServer * server;
 };
