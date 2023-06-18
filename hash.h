@@ -24,11 +24,10 @@ template <typename T>
 class hashTable {
 	public:
 		hashTable() {
-			values = new hashContainer<T>*[100];
+			values = new hashContainer<T>*[size];
 			for(int i = 0; i < size; i++) {
 				values[i] = NULL;
 			}
-			this->size = 100;
 		};
 
 		hashTable(int tableSize) {
@@ -77,6 +76,10 @@ class hashTable {
 			int hashVal = stringHashFunction(key, size);
 			hashContainer<T> * cur = values[hashVal];
 
+			if( cur == NULL ) {
+				return NULL;
+			}
+
 			while(cur->next != NULL) {
 				if(cur->key == key) {
 					return cur->value;
@@ -101,7 +104,6 @@ class hashTable {
 				}
 			}
 			headers += "\r\n";
-			printf("%s", headers.c_str());
 			return headers;
 		}
 
@@ -117,7 +119,7 @@ class hashTable {
 			}
 		};
 	private:
-		int size;
+		int size = 100;
 		hashContainer<T> ** values;
 		
 };

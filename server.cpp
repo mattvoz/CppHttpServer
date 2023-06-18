@@ -6,9 +6,6 @@
 
 int initWinsock() {
     WSADATA sockData;
-
-    struct addrinfo * addrResult = NULL;
-
     return WSAStartup( MAKEWORD(2,2), &sockData );
 }
 
@@ -29,20 +26,29 @@ struct addrinfo * getSocketAddressInfo( PCSTR port ) {
 
     if( result != 0) {
         printf("failed to get socket address info with error %d", result);
+        fflush(stdout);
         exit;
     }
 
     return addrResult;
 }
 
+void httpServer::GET( std::string route, void (* func) (httpRequest * req, httpResponse * res) ){
+    struct routeInfo info = routeInfo();
+    info.func = func;
+    getRoutes.add(route, info);
+}
 
 httpServer::httpServer() {
+    fflush(stdout);
     listenSocket = INVALID_SOCKET;
 
     if( initWinsock() != 0) {
-        printf("failed to  init winsock");
+        printf("failed to  init winsock\n");
+        fflush(stdout);
         exit(1);
     }
+
 }
 
 void httpServer::prepSocket( std::string port ) {
@@ -96,7 +102,7 @@ void httpServer::serverListen( std::string port ) {
 
         struct threadData * data = new threadData();
 
-        data->data = NULL;
+        data->headers = NULL;
         data->size = NULL;
         data->client = clientSock;
         data->server = this;
@@ -105,9 +111,36 @@ void httpServer::serverListen( std::string port ) {
     }
 }
 
+void httpServer::applyMiddleWare(){
+
+}
+
 httpServer::~httpServer() {
     closesocket(listenSocket);
     WSACleanup();
+}
+
+
+void httpServer::doRequest( std::string requestType, std::string route, httpRequest * req, httpResponse * res ) {\
+    printf("processing request\n");
+    if( requestType == "GET" ) {
+        printf("received get request for route %s\n", route.c_str() );
+        struct routeInfo * routeDetails = getRoutes[route];
+        if( routeDetails == NULL ) {
+            printf("no route found\n");
+            res->setStatus(404);
+            return;
+        }
+        for(int i = 0 ; i < 10; i++ ) {
+            if( routeDetails->middleWare[i] == NULL ){
+                break;
+            }
+            routeDetails->middleWare[i]( req, res );
+        }
+
+        routeDetails->func( req, res );
+    }
+
 }
 
 
@@ -141,14 +174,19 @@ void readRequest( void * threadData ) {
 
         buffSize = bytesRecieved;
         if( realloc( recBuf, sizeof(char) * buffSize) == NULL) {
-            printf("failed to update size of buffer canceling request\n");
+            printf("failed to update size of headers buffer canceling request\n");
             closesocket( threadInfo->client );
             return;
         }
 
         bytesRecieved = recv( threadInfo->client, recBuf, buffSize, 0);
+        if( bytesRecieved < 0 ) {
+            printf("failed to read from socket closing socket");
+            closesocket( threadInfo->client );
+            return;
+        }
 
-        threadInfo->data = recBuf;
+        threadInfo->headers = recBuf;
         threadInfo->size = bytesRecieved;
 
         parseRequest( threadInfo );
@@ -161,19 +199,14 @@ void parseRequest( void * threadData ) {
     char type[5];
     char path[100];
     char version[20];
-    sscanf( threadInfo->data, "%s %s %s", type, path, version );
+    sscanf( threadInfo->headers, "%s %s %s", type, path, version );
 
-    httpRequest * req = new httpRequest( threadInfo->data, threadInfo->size );
+    printf("%s %s %s\n", path, type, version);
 
-
-    std::string tmpstr( threadInfo->data, threadInfo->size );
-
-    std::stringstream requestStream = std::stringstream( tmpstr );
-    std::string currentLine;
-
+    httpRequest * req = new httpRequest( threadInfo->headers, threadInfo->size );
     httpResponse * res = new httpResponse( threadInfo->client );
 
-    res->setStatus(200);
+    threadInfo->server->doRequest(type, path, req, res);
 
     res->sendResponse();
 

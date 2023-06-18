@@ -45,6 +45,10 @@
         "xiosbase": "cpp",
         "xlocinfo": "cpp",
         "xlocnum": "cpp",
-        "any": "cpp"
+        "any": "cpp",
+        "functional": "cpp",
+        "list": "cpp",
+        "unordered_map": "cpp",
+        "xhash": "cpp"
     }
 }

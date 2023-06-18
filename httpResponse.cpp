@@ -57,6 +57,11 @@ void httpResponse::appendStatus( std::string * response ) {
     *response += "\r\n";
 }
 
+void httpResponse::textplain( std::string data ) {
+    type = text_plain;
+    text = data;
+}
+
 void httpResponse::sendResponse() {
     std::string response;
 
@@ -64,13 +69,20 @@ void httpResponse::sendResponse() {
 
     appendStatus( &response );
 
-    headers.add("Content-Type", "text/html");
-    headers.add("Content-Length", "9");
-
-    response += headers.toString();
-
-    response += "HEY THERE";
-
+    std::string body;
+    switch( type ) {
+        case text_plain:
+            char buf[9];
+            snprintf(buf, 9, "%d", text.length());
+            headers.add("Content-Length", buf);
+            headers.add("Content-Type", "text/plain");
+            body = text;
+        break;
+        default:
+            headers.add("Content-Length", "0");
+        break;
+    }
+    response += headers.toString() + body;
     send( this->target, response.c_str(), response.size(), 0);
 };
 

@@ -8,12 +8,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
+#include <functional>
 #include <any>
 #include "hash.h"
 #include "JSON.h"
+#include "httpRequest.h"
+#include "httpResponse.h"
 
-enum responseType { JSON, FileResponse, GIF, PNG, javaArchive, };
 class httpServer;
+
+struct routeInfo{
+	void (* func) (httpRequest * req, httpResponse * res);
+	void (* middleWare[10]) (void * req, void * res);
+};
 
 struct addrinfo * getSocketAddressInfo( PCSTR port );
 int initWinsock();
@@ -29,49 +36,8 @@ class Router {
 	private:
 };
 
-class httpRequest {
-	public:
-		httpRequest( char * req, int reqSize);
-		~httpRequest();
-
-		hashTable<std::string> headers = hashTable<std::string>(50);
-		hashTable<std::string> queryParams = hashTable<std::string>(20);
-	private:
-		std::string requestType;
-		std::string httpVersion;
-		std::string path;
-		std::string rawRequest;
-};
-
-class httpResponse {
-	public:
-		httpResponse( SOCKET recipient );
-		~httpResponse();
-
-		void setStatus( unsigned int);
-		void setStatus(std::string);
-		void JSON( std::string object );
-		void JSON( JSONObject object );
-		void file( std::string filePath );
-		void file( FILE * file );
-		void sendFile();
-		void sendResponse();
-		void appendStatus( std::string * response );
-
-		int getStatus();
-
-		hashTable<std::string> headers = hashTable<std::string>(50);
-	private:
-		SOCKET target;
-		std::string statusCode;
-		std::any body;
-		responseType type;
-		FILE ** files;
-
-};
-
 struct threadData {
-	char * data;
+	char * headers;
 	long size;
 	SOCKET client;
 	httpServer * server;
@@ -82,17 +48,25 @@ class httpServer {
 		httpServer();
 		void serverListen( std::string port);
 		void use( void * (* middleware ) ( void * req, void * res) );
-		void GET( std::string route, void * (* func) (void * req, void * res) );
-		void POST( std::string route, void * (* func) (void * req, void * res) );
-		void PUT( std::string route, void * (* func) (void * req, void * res ) );
-		void RDELETE( std::string route, void * (* func) (void * req, void * res ) );
+		void GET( std::string route, void (* func) (httpRequest * req, httpResponse * res));
+		void POST( std::string route, void (* func) (httpRequest * req, httpResponse * res) );
+		void POST( std::string route, void (* func) (httpRequest * req, httpResponse * res), ... );
+		void PUT( std::string route, void (* func) (httpRequest * req, httpResponse * res ) );
+		void PUT( std::string route, void (* func) (httpRequest * req, httpResponse * res ), ... );
+		void RDELETE( std::string route, void (* func) (httpRequest * req, httpResponse * res ) );
+		void RDELETE( std::string route, void (* func) (httpRequest * req, httpResponse * res ), ... );
 		void applyMiddleWare();
-		void doRouting();
+		void doRequest( std::string requestType, std::string route, httpRequest * req, httpResponse * res );
 		~httpServer();
 	private:
 		std::string port;
 		std::vector< void (*)( httpRequest * req, httpResponse * res)> middleWare;
-		void findRoute();
+		hashTable<struct routeInfo> getRoutes = hashTable<struct routeInfo>();
+		/*
+		hashTable<struct routeInfo> postRoutes;
+		hashTable<struct routeInfo> putRoutes;
+		hashTable<struct routeInfo> deleteRoutes;
+		*/
 		SOCKET listenSocket;
 		void prepSocket( std::string port );
 
