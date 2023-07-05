@@ -33,10 +33,13 @@ struct addrinfo * getSocketAddressInfo( PCSTR port ) {
     return addrResult;
 }
 
-void httpServer::GET( std::string route, void (* func) (httpRequest * req, httpResponse * res) ){
-    struct routeInfo info = routeInfo();
-    info.func = func;
-    getRoutes.add(route, info);
+void httpServer::get( std::string route, void (* func) (httpRequest * req, httpResponse * res) ){
+    struct routeInfo * info = new routeInfo();
+    if( info == NULL ) {
+        exit(1);
+    }
+    info->func = func;
+    paths.addPath(route, info, GET);
 }
 
 httpServer::httpServer() {
@@ -49,6 +52,10 @@ httpServer::httpServer() {
         exit(1);
     }
 
+}
+
+void httpServer::staticServe( std::string path ) {
+    struct routeInfo info = routeInfo();
 }
 
 void httpServer::prepSocket( std::string port ) {
@@ -103,7 +110,7 @@ void httpServer::serverListen( std::string port ) {
         struct threadData * data = new threadData();
 
         data->headers = NULL;
-        data->size = NULL;
+        data->size = 0;
         data->client = clientSock;
         data->server = this;
 
@@ -123,9 +130,17 @@ httpServer::~httpServer() {
 
 void httpServer::doRequest( std::string requestType, std::string route, httpRequest * req, httpResponse * res ) {\
     printf("processing request\n");
+    struct treeNode * node = paths.getPath(route);
+    if( node == NULL ) {
+        printf("no route found\n");
+        res->setStatus(404);
+        return;
+    }
+
     if( requestType == "GET" ) {
-        printf("received get request for route %s\n", route.c_str() );
-        struct routeInfo * routeDetails = getRoutes[route];
+        
+        struct routeInfo * routeDetails = node->pathFunctions[GET];
+
         if( routeDetails == NULL ) {
             printf("no route found\n");
             res->setStatus(404);

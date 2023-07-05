@@ -1,6 +1,7 @@
 #include "server.h"
 #include <iostream>
 #include <sstream>
+#include "PathTree.h"
 
 void hiRoute( httpRequest * req, httpResponse * res) {
     res->textplain( "this is a test from the server :)" );
@@ -10,7 +11,7 @@ void hiRoute( httpRequest * req, httpResponse * res) {
 int main(int argc, char ** argv) {
     httpServer serv = httpServer();
 
-    serv.GET(std::string("/test"), hiRoute);
+    serv.get("/hi", hiRoute);
 
     serv.serverListen("27015");
 }
