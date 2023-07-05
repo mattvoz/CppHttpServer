@@ -90,6 +90,7 @@ treeNode * PathTree::getPath( std::string path ) {
             if( current->pathPiece == piece ) {
                 break;
             }
+            current = current->next;
         }
         if( current == NULL ) {
             return NULL;

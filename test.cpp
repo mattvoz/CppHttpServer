@@ -11,6 +11,8 @@ void hiRoute( httpRequest * req, httpResponse * res) {
 int main(int argc, char ** argv) {
     httpServer serv = httpServer();
 
+    serv.get("/", hiRoute);
+
     serv.get("/hi", hiRoute);
 
     serv.serverListen("27015");
