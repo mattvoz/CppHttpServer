@@ -42,7 +42,7 @@ struct threadData {
 class httpServer {
 	public:
 		httpServer();
-		void serverListen( std::string port);
+		void serverListen(std::string address, std::string port);
 		void use( void * (* middleware ) ( void * req, void * res) );
 		void staticServe( std::string route );
 		void get( std::string route, void (* func) (httpRequest * req, httpResponse * res));
@@ -65,7 +65,7 @@ class httpServer {
 		hashTable<struct routeInfo> deleteRoutes;
 		*/
 		SOCKET listenSocket;
-		void prepSocket( std::string port );
+		void prepSocket( std::string address, std::string port );
 
 };
 

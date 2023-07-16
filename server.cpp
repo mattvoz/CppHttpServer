@@ -9,20 +9,23 @@ int initWinsock() {
     return WSAStartup( MAKEWORD(2,2), &sockData );
 }
 
-struct addrinfo * getSocketAddressInfo( PCSTR port ) {
+/**
+ * Get socket prepped for connection
+*/
+struct addrinfo * getSocketAddressInfo( std::string address, PCSTR port ) {
     int result;
     struct addrinfo * addrResult = NULL;
 
-    struct addrinfo hints;
+    struct addrinfo localaddr;
 
-    memset( &hints, 0, sizeof(hints) );
+    memset( &localaddr, 0, sizeof(localaddr) );
 
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags = AI_PASSIVE;
+    localaddr.ai_family = AF_INET;
+    localaddr.ai_socktype = SOCK_STREAM;
+    localaddr.ai_protocol = IPPROTO_TCP;
+    localaddr.ai_flags = AI_PASSIVE;
 
-    result = getaddrinfo(NULL, port, &hints, &addrResult);
+    result = getaddrinfo(address.c_str(), port, &localaddr, &addrResult);
 
     if( result != 0) {
         printf("failed to get socket address info with error %d", result);
@@ -58,8 +61,8 @@ void httpServer::staticServe( std::string path ) {
     struct routeInfo info = routeInfo();
 }
 
-void httpServer::prepSocket( std::string port ) {
-    struct addrinfo * addrResult = getSocketAddressInfo( ( port.c_str() ) );
+void httpServer::prepSocket( std::string address, std::string port ) {
+    struct addrinfo * addrResult = getSocketAddressInfo( address, ( port.c_str() ) );
 
     listenSocket = socket(addrResult->ai_family, addrResult->ai_socktype, addrResult->ai_protocol);
 
@@ -88,9 +91,9 @@ void httpServer::prepSocket( std::string port ) {
     }
 }
 
-void httpServer::serverListen( std::string port ) {
+void httpServer::serverListen( std::string address, std::string port ) {
 
-    this->prepSocket(port);
+    this->prepSocket(address, port);
 
     while(true) {
         SOCKET clientSock = INVALID_SOCKET;

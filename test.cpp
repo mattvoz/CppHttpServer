@@ -15,5 +15,5 @@ int main(int argc, char ** argv) {
 
     serv.get("/hi", hiRoute);
 
-    serv.serverListen("27015");
+    serv.serverListen("0.0.0.0", "27015");
 }
