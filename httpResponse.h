@@ -12,7 +12,7 @@
 #include "hash.h"
 #include "JSON.h"
 
-enum responseType { unkown, JSON, FileResponse, GIF, PNG, javaArchive, text_plain, image_jpeg, image_png, image_svg,};
+enum responseType { unkown, JSON_RES, FileResponse, GIF, PNG, javaArchive, text_plain, image_jpeg, image_png, image_svg,};
 class httpResponse {
 	public:
 		httpResponse( SOCKET recipient );
@@ -39,6 +39,7 @@ class httpResponse {
 		responseType type = unkown;
 		std::string text;
 		FILE ** files;
+		JSONObject * jsonRes = NULL;
 
 };
 

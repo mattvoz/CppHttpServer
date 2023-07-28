@@ -8,12 +8,17 @@ void hiRoute( httpRequest * req, httpResponse * res) {
     res->setStatus(200);
 }
 
+void JSONtest( httpRequest * req, httpResponse * res) {
+    res->JSON("{'TEST': 1234}");
+}
+
 int main(int argc, char ** argv) {
     httpServer serv = httpServer();
 
     serv.get("/", hiRoute);
 
     serv.get("/hi", hiRoute);
+    serv.get("/jsonTest", JSONtest);
 
     serv.serverListen("0.0.0.0", "27015");
 }

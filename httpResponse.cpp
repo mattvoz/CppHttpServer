@@ -52,6 +52,8 @@ void httpResponse::appendStatus( std::string * response ) {
         *response += this->statusCode + " BAD REQUEST";
     } else if( 500 <= status ) {
         *response += this->statusCode + " INTERNAL SERVER ERROR";
+    }else {
+        *response += "200 OK";
     }
 
     *response += "\r\n";
@@ -62,6 +64,16 @@ void httpResponse::textplain( std::string data ) {
     text = data;
 }
 
+void httpResponse::JSON( std::string data ) {
+    type = JSON_RES;
+    text = data;
+}
+
+void httpResponse::JSON( JSONObject data ) {
+    type = JSON_RES;
+    text = data.toString();
+}
+
 void httpResponse::sendResponse() {
     std::string response;
 
@@ -70,19 +82,30 @@ void httpResponse::sendResponse() {
     appendStatus( &response );
 
     std::string body;
+    char lenBuf[9];
     switch( type ) {
         case text_plain:
-            char buf[9];
-            snprintf(buf, 9, "%d", text.length());
-            headers.add("Content-Length", buf);
+            snprintf(lenBuf, 9, "%d", text.length());
+            headers.add("Content-Length", lenBuf);
             headers.add("Content-Type", "text/plain");
             body = text;
+        break;
+        case JSON_RES:
+            if(jsonRes != NULL){
+                //body = jsonRes->toString();
+            } else {
+                body = text;
+            }
+            snprintf(lenBuf, 9, "%d", body.length());
+            headers.add("Content-Type", "text/JSON");
+            headers.add("Content-Length", lenBuf);
         break;
         default:
             headers.add("Content-Length", "0");
         break;
     }
     response += headers.toString() + body;
+    printf("response: %s", response.c_str());
     send( this->target, response.c_str(), response.size(), 0);
 };
 
