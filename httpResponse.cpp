@@ -88,14 +88,8 @@ void httpResponse::sendResponse() {
             snprintf(lenBuf, 9, "%d", text.length());
             headers.add("Content-Length", lenBuf);
             headers.add("Content-Type", "text/plain");
-            body = text;
         break;
         case JSON_RES:
-            if(jsonRes != NULL){
-                //body = jsonRes->toString();
-            } else {
-                body = text;
-            }
             snprintf(lenBuf, 9, "%d", body.length());
             headers.add("Content-Type", "text/JSON");
             headers.add("Content-Length", lenBuf);
@@ -104,7 +98,7 @@ void httpResponse::sendResponse() {
             headers.add("Content-Length", "0");
         break;
     }
-    response += headers.toString() + body;
+    response += headers.toString() + text;
     printf("response: %s", response.c_str());
     send( this->target, response.c_str(), response.size(), 0);
 };
