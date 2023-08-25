@@ -7,7 +7,7 @@
 #include "httpRequest.h"
 #include "httpResponse.h"
 
-enum httpMethods{ GET, PUT, POST, RDELETE, HEAD,  };
+enum httpMethods{ GETR, PUTR, POSTR, RDELETER, HEADR,  };
 
 struct routeInfo{
 	void (* func) (httpRequest * req, httpResponse * res);

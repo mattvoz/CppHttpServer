@@ -3,11 +3,12 @@
 
 #include <string>
 
-inline int stringHashFunction( std::string key, int tablesize ) {
-	int total = 0;
-	int shift = key.length() % 2 == 0 ? 1 : 2;
+inline unsigned int stringHashFunction( std::string key, int tablesize ) {
+	unsigned int total = 0;
+	unsigned int shift = key.length() % 2 == 0 ? 1 : 2;
+	int prime = 29;
 	for(int i = 0; i < key.length(); i++) {
-		total += key[i] << shift;
+		total += (key[i] << shift) * prime;
 	}
 
 	return total % tablesize;

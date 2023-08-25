@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include<string>
+#include <cstdarg>
 
 int initWinsock() {
     WSADATA sockData;
@@ -36,24 +37,46 @@ struct addrinfo * getSocketAddressInfo( std::string address, PCSTR port ) {
     return addrResult;
 }
 
-void httpServer::get( std::string route, void (* func) (httpRequest * req, httpResponse * res) ){
+void httpServer::GET( std::string route, httpFunc func){
     struct routeInfo * info = new routeInfo();
     if( info == NULL ) {
         exit(1);
     }
     info->func = func;
-    paths.addPath(route, info, GET);
+    paths.addPath(route, info, GETR);
+}
+
+
+/**
+ * Takes in httpFunc *'s as the variadic arguments and then pass null at end to end so middleware will work on http request / response
+*/
+void httpServer::GET( std::string route, ...){
+    va_list args;
+    va_start(args, route);
+    httpFunc tmp = va_arg(args, httpFunc);;
+    while( tmp != NULL ) {
+        struct routeInfo * info = new routeInfo();
+        if( info == NULL ) {
+            exit(1);
+        }
+        info->func = tmp;
+        paths.addPath(route, info, GETR);
+        tmp = va_arg(args, httpFunc);
+    }
+    va_end(args);
 }
 
 httpServer::httpServer() {
     fflush(stdout);
     listenSocket = INVALID_SOCKET;
 
+    #ifdef _WIN32
     if( initWinsock() != 0) {
         printf("failed to  init winsock\n");
         fflush(stdout);
         exit(1);
     }
+    #endif
 
 }
 
@@ -64,7 +87,7 @@ void httpServer::staticServe( std::string path ) {
 void httpServer::prepSocket( std::string address, std::string port ) {
     struct addrinfo * addrResult = getSocketAddressInfo( address, ( port.c_str() ) );
 
-    listenSocket = socket(addrResult->ai_family, addrResult->ai_socktype, addrResult->ai_protocol);
+    listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     if( listenSocket == INVALID_SOCKET) {
         printf("error at socket(): %d\n", WSAGetLastError());
@@ -142,7 +165,7 @@ void httpServer::doRequest( std::string requestType, std::string route, httpRequ
 
     if( requestType == "GET" ) {
         
-        struct routeInfo * routeDetails = node->pathFunctions[GET];
+        struct routeInfo * routeDetails = node->pathFunctions[GETR];
 
         if( routeDetails == NULL ) {
             printf("no route found\n");

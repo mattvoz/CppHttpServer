@@ -52,6 +52,7 @@
         "xhash": "cpp",
         "queue": "cpp",
         "algorithm": "cpp",
-        "deque": "cpp"
+        "deque": "cpp",
+        "cstdarg": "cpp"
     }
 }

@@ -39,13 +39,16 @@ struct threadData {
 	httpServer * server;
 };
 
+typedef void(*httpFunc)(httpRequest *, httpResponse *);
+
 class httpServer {
 	public:
 		httpServer();
 		void serverListen(std::string address, std::string port);
 		void use( void * (* middleware ) ( void * req, void * res) );
 		void staticServe( std::string route );
-		void get( std::string route, void (* func) (httpRequest * req, httpResponse * res));
+		void GET( std::string route, httpFunc func);
+		void GET( std::string route, ...);
 		void POST( std::string route, void (* func) (httpRequest * req, httpResponse * res) );
 		void POST( std::string route, void (* func) (httpRequest * req, httpResponse * res), ... );
 		void PUT( std::string route, void (* func) (httpRequest * req, httpResponse * res ) );

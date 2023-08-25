@@ -8,6 +8,16 @@ void hiRoute( httpRequest * req, httpResponse * res) {
     res->setStatus(200);
 }
 
+void test( httpRequest * req, httpResponse * res) {
+    res->textplain( "this is a test from the server :)" );
+    res->headers.add("Content-Type", "test-type");
+    res->setStatus(200);
+}
+
+void testMiddleWare(httpRequest * req, httpResponse * res){
+    printf("THIS IS MIDDLEWARE ALERT MIDDLEWARE");
+}
+
 void JSONtest( httpRequest * req, httpResponse * res) {
     res->JSON("{'TEST': 1234}");
 }
@@ -15,10 +25,11 @@ void JSONtest( httpRequest * req, httpResponse * res) {
 int main(int argc, char ** argv) {
     httpServer serv = httpServer();
 
-    serv.get("/", hiRoute);
+    serv.GET("/", testMiddleWare, test, NULL);
 
-    serv.get("/hi", hiRoute);
-    serv.get("/jsonTest", JSONtest);
+    serv.GET("/hi", hiRoute, NULL);
+    serv.GET("/test", test);
+    serv.GET("/jsonTest", JSONtest);
 
     serv.serverListen("0.0.0.0", "27015");
 }

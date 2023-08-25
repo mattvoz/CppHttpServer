@@ -71,7 +71,7 @@ void httpResponse::JSON( std::string data ) {
 
 void httpResponse::JSON( JSONObject data ) {
     type = JSON_RES;
-    text = data.toString();
+    //text = data.toString();
 }
 
 void httpResponse::sendResponse() {
@@ -83,20 +83,27 @@ void httpResponse::sendResponse() {
 
     std::string body;
     char lenBuf[9];
-    switch( type ) {
-        case text_plain:
-            snprintf(lenBuf, 9, "%d", text.length());
-            headers.add("Content-Length", lenBuf);
-            headers.add("Content-Type", "text/plain");
-        break;
-        case JSON_RES:
-            snprintf(lenBuf, 9, "%d", body.length());
-            headers.add("Content-Type", "text/JSON");
-            headers.add("Content-Length", lenBuf);
-        break;
-        default:
-            headers.add("Content-Length", "0");
-        break;
+    if( headers["Content-Type"] != NULL ) {
+        snprintf(lenBuf, 9, "%d", text.length());
+        headers.add("Content-Length", lenBuf);
+        headers.add("Content-Length", lenBuf );
+
+    } else {
+        switch( type ) {
+            case text_plain:
+                snprintf(lenBuf, 9, "%d", text.length());
+                headers.add("Content-Length", lenBuf);
+                headers.add("Content-Type", "text/plain");
+            break;
+            case JSON_RES:
+                snprintf(lenBuf, 9, "%d", text.length());
+                headers.add("Content-Type", "text/JSON");
+                headers.add("Content-Length", lenBuf);
+            break;
+            default:
+                headers.add("Content-Length", "0");
+            break;
+        }
     }
     response += headers.toString() + text;
     printf("response: %s", response.c_str());
