@@ -41,6 +41,7 @@ class JSONObject{
 		static JSONObject parseObject( std::string JSONString );
 	private:
 		JSONObject( std::stringstream * sub );
+		static JSONObject parseObject( std::stringstream * JSONString );
 		static JSONObject parseSubObject( std::stringstream * stream);
 		static std::string parseJSONString( std::stringstream * );
 		hashContainer<JSONChild> data;

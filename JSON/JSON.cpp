@@ -16,7 +16,7 @@ JSONObject::JSONObject() {
     data = hashContainer<JSONChild>();
 };
 
-JSONObject JSONObject::parseObject( std::string object ) {
+JSONObject JSONObject::parseObject( std::stringstream * stream ) {
 
     JSONObject newObject = JSONObject();
 
@@ -24,24 +24,20 @@ JSONObject JSONObject::parseObject( std::string object ) {
     bool escaped;
     bool inString;
 
-    std::stringstream stream(object);
-
-    std::string returnString = std::string();
-
     bool searchingForKey=true;
     bool endOfKey = false;
     bool endOfValue = false;
 
     std::string key;
 
-    while( !stream.eof() ) {
+    while( !stream->eof() ) {
         char x;
-        stream.get(x);
+        stream->get(x);
 
         std::cout << x << "\n";
 
         if( x == ' ' || x == '\n' ) {
-            stream.get(x);
+            stream->get(x);
             continue;
         
         }
@@ -54,18 +50,35 @@ JSONObject JSONObject::parseObject( std::string object ) {
         }
     }
 
-    while( !stream.eof() ) {
+    while( !stream->eof() ) {
         char x;
-        stream.get(x);
+        stream->get(x);
+
+        std::cout << "CURRENT CHAR IS " << x << '\n';
 
         if( x == ' ' || x == '\n' ) {
-            stream.get(x);
             continue;
-        
         }
 
-        if( endOfKey && x != ',' ) {
-            throw new invalidJSONException("DID NOT FIND , AFTER KEY AT ");
+        std::cout << "END OF KEY IS " << endOfKey << '\n';
+        if( endOfKey && x != ':' ) {
+            throw new invalidJSONException("DID NOT FIND : AFTER KEY AT ");
+        }else if( endOfKey ) {
+            endOfKey = false;
+            continue;
+        }
+
+        std::cout << "END OF VALUE IS " << endOfValue << '\n';
+
+        if( endOfValue && x == '}' ) {
+            break;
+        }else if( endOfValue && x == ',' ) {
+            endOfValue = false;
+            searchingForKey = true;
+            continue;
+        }else if( endOfValue ) {
+            std::cout << ", NOT FOUND";
+            throw new invalidJSONException("DID NOT FIND , AFTER VALUE ");
         }
 
 
@@ -73,36 +86,38 @@ JSONObject JSONObject::parseObject( std::string object ) {
             if( x != '"' ) {
                 throw invalidJSONException("KEY DID NOT START WITH \"");
             }
-            key = JSONObject::parseJSONString( &stream );
+            key = JSONObject::parseJSONString( stream );
             searchingForKey = false;
             endOfKey = true;
         }else{
-
             if( x == '"' ) {
-                std::string string = JSONObject::parseJSONString( &stream );
+                std::string string = JSONObject::parseJSONString( stream );
             }else if( x == '{'){
-                JSONObject subObject = parseSubObject( &stream );
+                JSONObject subObject = JSONObject::parseObject( stream );
 
             }else if( x == '[' ) {
                 
             }else if( (x > 0x29 && x < 0x40) || x == '-') {
-                std::string num;
-                stream >> num;
-                char * end;
-                double val = strtod( num.c_str(), &end );
+                stream->putback(x);
+                double num;
+                *stream >> num;
+                std::cout << "num string is " << num << "\n";
             }else {
                 std::string string = std::string("UNEXPECTED VALUE STARTER GOT ");
                 string += x;
                 throw invalidJSONException(string.c_str());
             }
+
+            endOfValue = true;
         }
     }
 
     return newObject;
 }
 
-JSONObject JSONObject::parseSubObject(std::stringstream * stream ) {
-
+JSONObject JSONObject::parseObject( std::string object ) {
+    std::stringstream stream = std::stringstream(object);
+    return JSONObject::parseObject(&stream);
 }
 
 std::string JSONObject::parseJSONString( std::stringstream * stream ) {
@@ -115,7 +130,6 @@ std::string JSONObject::parseJSONString( std::stringstream * stream ) {
         std::cout << currentChar << "\n";
 
         if( !escaped && currentChar == '"'){
-            stream->get();
             break;
         }
 
@@ -142,5 +156,6 @@ std::string JSONObject::parseJSONString( std::stringstream * stream ) {
         returnString+=currentChar;
         stream->get(currentChar);
     }
+    std::cout << "RETURNING STRING " << returnString << "\n";
     return returnString;
 }

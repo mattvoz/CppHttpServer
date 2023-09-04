@@ -1,5 +1,9 @@
 #include "JSON.h"
 
 int main() {
-    JSONObject::parseObject("{\"hi\" : \"hey\"}");
+    try{
+        JSONObject::parseObject("{\"hi\" : \"hey\", \"num\": -123}");
+    }catch(std::exception e ) {
+        std::cout << e.what() ;
+    }
 }
