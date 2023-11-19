@@ -8,7 +8,10 @@
 #include <any>
 #include "hash.h"
 
-enum JSONDataTypes{ STRING, NUMBER, OBJECT, ARRAY, EMPTY};
+enum JSONDataType{ STRING, NUMBER, OBJECT, ARRAY, NULLTYP};
+
+class JSONArray;
+class JSONObject;
 
 class invalidJSONException: public std::exception{
 	public:
@@ -19,14 +22,28 @@ class invalidJSONException: public std::exception{
 		std::string msg;
 };
 
-class JSONChild{
+class JSONElement{
 	public:
+		JSONElement();
+		JSONElement( double num );
+		JSONElement( std::string );
+		JSONElement( JSONArray *  );
+		JSONElement( JSONObject * );
+		~JSONElement();
 	private:
-		double num;
-		std::string string;
-		JSONChild * next;
+		std::string key;
+		void * data;
+		JSONDataType type;
+		JSONElement * next;
 };
 
+class JSONArray{
+	public:
+		JSONElement * operator[](int);
+		static JSONArray* parseArray(  std::string );
+	private:
+		JSONElement * arr;
+};
 
 /**
  * Uses a hashtable of std::any to store values so casts are required with std::cast_any
@@ -38,13 +55,13 @@ class JSONObject{
 
 		std::string operator[](std::string);
 		std::string toString();
-		static JSONObject parseObject( std::string JSONString );
+		static JSONObject* parseObject( std::string JSONString );
 	private:
 		JSONObject( std::stringstream * sub );
-		static JSONObject parseObject( std::stringstream * JSONString );
-		static JSONObject parseSubObject( std::stringstream * stream);
+		static JSONObject* parseObject( std::stringstream * JSONString );
+		static JSONObject* parseSubObject( std::stringstream * stream);
 		static std::string parseJSONString( std::stringstream * );
-		hashContainer<JSONChild> data;
+		JSONElement ** data;
 
 };
 

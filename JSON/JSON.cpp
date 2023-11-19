@@ -13,12 +13,12 @@ const char* invalidJSONException::what() const throw() {
 
 
 JSONObject::JSONObject() {
-    data = hashContainer<JSONChild>();
+    data = new JSONElement*[100];
 };
 
-JSONObject JSONObject::parseObject( std::stringstream * stream ) {
+JSONObject *  JSONObject::parseObject( std::stringstream * stream ) {
 
-    JSONObject newObject = JSONObject();
+    JSONObject * newObject = new JSONObject();
 
     char currentChar;
     bool escaped;
@@ -93,8 +93,7 @@ JSONObject JSONObject::parseObject( std::stringstream * stream ) {
             if( x == '"' ) {
                 std::string string = JSONObject::parseJSONString( stream );
             }else if( x == '{'){
-                JSONObject subObject = JSONObject::parseObject( stream );
-
+                JSONElement * subObject = new JSONElement( JSONObject::parseObject(stream) );
             }else if( x == '[' ) {
                 
             }else if( (x > 0x29 && x < 0x40) || x == '-') {
@@ -109,13 +108,14 @@ JSONObject JSONObject::parseObject( std::stringstream * stream ) {
             }
 
             endOfValue = true;
+            searchingForKey = true;
         }
     }
 
     return newObject;
 }
 
-JSONObject JSONObject::parseObject( std::string object ) {
+JSONObject * JSONObject::parseObject( std::string object ) {
     std::stringstream stream = std::stringstream(object);
     return JSONObject::parseObject(&stream);
 }
@@ -158,4 +158,34 @@ std::string JSONObject::parseJSONString( std::stringstream * stream ) {
     }
     std::cout << "RETURNING STRING " << returnString << "\n";
     return returnString;
+}
+
+
+JSONElement::JSONElement(){
+    type = NULLTYP;
+    data = NULL;
+}
+JSONElement::JSONElement( double num ){
+    type = NUMBER;
+    data = new double(num);
+}
+JSONElement::JSONElement( std::string string ){
+    type = STRING;
+    data = new std::string(string);
+}
+
+JSONElement::JSONElement( JSONArray * array ){
+    type=ARRAY;
+    data = array;
+}
+JSONElement::JSONElement( JSONObject * object ){
+    type=OBJECT;
+    data = object;
+}
+
+JSONElement::~JSONElement(){
+    if( type == NULLTYP ) {
+        return;
+    }
+    delete(data);
 }
