@@ -31,10 +31,15 @@ class JSONElement{
 		JSONElement( JSONObject * );
 		~JSONElement();
 	private:
+		friend JSONObject;
 		std::string key;
 		void * data;
 		JSONDataType type;
-		JSONElement * next;
+};
+
+struct JSONHOLDER{
+	JSONElement * data;
+	JSONHOLDER * next;
 };
 
 class JSONArray{
@@ -53,15 +58,21 @@ class JSONObject{
 		JSONObject();
 		JSONObject( char * , int objectSize );
 
-		std::string operator[](std::string);
+		void put(std::string key, double num);
+		void put(std::string key, std::string );
+		void put(std::string key, JSONArray *);
+		void put(std::string key, JSONObject *);
+		JSONElement* operator[](std::string);
 		std::string toString();
 		static JSONObject* parseObject( std::string JSONString );
 	private:
 		JSONObject( std::stringstream * sub );
+		unsigned int hash( std::string );
 		static JSONObject* parseObject( std::stringstream * JSONString );
 		static JSONObject* parseSubObject( std::stringstream * stream);
 		static std::string parseJSONString( std::stringstream * );
-		JSONElement ** data;
+		struct JSONHOLDER ** data;
+		const JSONObject * nullObj = new JSONObject();
 
 };
 

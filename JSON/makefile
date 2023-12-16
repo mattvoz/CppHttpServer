@@ -1,3 +1,5 @@
+lib:	JSON.o
+	ar rs	JSON.a	JSON.o	JSON.h
 test.exe:	JSON.o	test.o
 	g++ JSON.o test.o -o test.exe
 test.o:	test.cpp	JSON.o

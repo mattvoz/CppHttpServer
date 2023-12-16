@@ -2,8 +2,9 @@
 
 int main() {
     try{
-        JSONObject::parseObject("{\"hi\" : \"hey\", \"num\": -123}");
+        JSONObject* object = JSONObject::parseObject("{\"hi\" : \"hey\", \"num\": -123}");
+        JSONElement x = (object)["hi"];
     }catch(std::exception e ) {
-        std::cout << e.what() ;
+        std::cout << "Caught exception" << e.what() ;
     }
 }

@@ -13,7 +13,7 @@ const char* invalidJSONException::what() const throw() {
 
 
 JSONObject::JSONObject() {
-    data = new JSONElement*[100];
+    data = new struct JSONHOLDER*[100];
 };
 
 JSONObject *  JSONObject::parseObject( std::stringstream * stream ) {
@@ -158,6 +158,49 @@ std::string JSONObject::parseJSONString( std::stringstream * stream ) {
     }
     std::cout << "RETURNING STRING " << returnString << "\n";
     return returnString;
+}
+
+unsigned int JSONObject::hash( std::string key ) {
+    int hashVal=0;
+    for(int i = 0 ; i < key.length(); i++ ) {
+        hashVal += ( ( key[i] << 2 ) >> 4 ) * 17;
+    }
+
+    return hashVal;
+}
+
+JSONElement * JSONObject::operator[]( std::string key){
+    struct JSONHOLDER * cur = this->data[hash(key)];
+
+    while( cur != NULL ) {
+        if( cur->data->key == key ){
+            return cur->data;
+        }
+        cur = cur->next;
+    }
+
+    return (JSONElement *) nullObj;
+}
+
+void JSONObject::put( std::string key, std::string val ) {
+    unsigned int hashVal = hash(key);
+
+    struct JSONHOLDER * cur = this->data[hashVal];
+    if( this->data[hashVal] == NULL ) {
+        struct JSONHOLDER * holder = new struct JSONHOLDER();
+        holder->data = new JSONElement(val);
+        holder->next = NULL;
+        return;
+    }
+
+    while(cur->next != NULL) {
+        cur = cur->next;
+        if( cur->data->key == key ) {
+            cur->data->data;
+        }
+    }
+
+    cur->next = NULL;
 }
 
 
