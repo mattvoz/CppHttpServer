@@ -11,14 +11,17 @@ const char* invalidJSONException::what() const throw() {
     return msg.c_str();
 }
 
+JSONObject::JSONObject(){}
 
-JSONObject::JSONObject() {
-    data = new struct JSONHOLDER*[100];
-};
+JSONObject::JSONObject( std::string string ) {
+    std::stringstream stream = std::stringstream(string);
+    this->parseJSONString( &stream );
+}
 
-JSONObject *  JSONObject::parseObject( std::stringstream * stream ) {
-
+void  JSONObject::parseString( std::stringstream * stream ) {
+    std::cout << "string" << std::endl;
     JSONObject * newObject = new JSONObject();
+    std::cout << "allocated" << std::endl;
 
     char currentChar;
     bool escaped;
@@ -30,28 +33,20 @@ JSONObject *  JSONObject::parseObject( std::stringstream * stream ) {
 
     std::string key;
 
-    while( !stream->eof() ) {
-        char x;
-        stream->get(x);
+    char x;
+    stream->get(x);
+    std::cout << x << std::endl;
 
-        std::cout << x << "\n";
-
-        if( x == ' ' || x == '\n' ) {
-            stream->get(x);
-            continue;
-        
-        }
-
-        if( x != '{') {
-            throw invalidJSONException("OBJECT DID NOT START WITH {");
-            return NULL;
-        }else{
-            break;
-        }
+    if( x != '{') {
+        std::cout << "invalid start char" << std::endl;
+        throw invalidJSONException("OBJECT DID NOT START WITH {");
     }
 
+    std::cout << stream->eof() << std::endl;
+    fflush(stdout);
+
     while( !stream->eof() ) {
-        char x;
+        std::cout << "parsing stream" << std::endl;
         stream->get(x);
 
         std::cout << "CURRENT CHAR IS " << x << '\n';
@@ -87,13 +82,14 @@ JSONObject *  JSONObject::parseObject( std::stringstream * stream ) {
                 throw invalidJSONException("KEY DID NOT START WITH \"");
             }
             key = JSONObject::parseJSONString( stream );
+            std::cout << key << std::endl;
             searchingForKey = false;
             endOfKey = true;
         }else{
             if( x == '"' ) {
                 std::string string = JSONObject::parseJSONString( stream );
             }else if( x == '{'){
-                JSONElement * subObject = new JSONElement( JSONObject::parseObject(stream) );
+                JSONElement * subObject = new JSONElement( this->parseSubObject(stream) );
             }else if( x == '[' ) {
                 
             }else if( (x > 0x29 && x < 0x40) || x == '-') {
@@ -111,13 +107,11 @@ JSONObject *  JSONObject::parseObject( std::stringstream * stream ) {
             searchingForKey = true;
         }
     }
-
-    return newObject;
 }
 
-JSONObject * JSONObject::parseObject( std::string object ) {
-    std::stringstream stream = std::stringstream(object);
-    return JSONObject::parseObject(&stream);
+//TODO
+JSONObject* JSONObject::parseSubObject(std::stringstream * stream){
+    return NULL;
 }
 
 std::string JSONObject::parseJSONString( std::stringstream * stream ) {
@@ -179,7 +173,20 @@ JSONElement * JSONObject::operator[]( std::string key){
         cur = cur->next;
     }
 
-    return (JSONElement *) nullObj;
+    return (JSONElement *) NULL;
+}
+
+JSONElement * JSONObject::operator[]( char * key){
+    struct JSONHOLDER * cur = this->data[hash(std::string(key))];
+
+    while( cur != NULL ) {
+        if( cur->data->key == key ){
+            return cur->data;
+        }
+        cur = cur->next;
+    }
+
+    return (JSONElement *) NULL;
 }
 
 void JSONObject::put( std::string key, std::string val ) {
@@ -203,6 +210,26 @@ void JSONObject::put( std::string key, std::string val ) {
     cur->next = NULL;
 }
 
+void JSONObject::put( std::string key, JSONArray * arr ) {
+    unsigned int hashVal = hash(key);
+
+    struct JSONHOLDER * cur = this->data[hashVal];
+    if( this->data[hashVal] == NULL ) {
+        struct JSONHOLDER * holder = new struct JSONHOLDER();
+        holder->data = new JSONElement(arr);
+        holder->next = NULL;
+        return;
+    }
+
+    while(cur->next != NULL) {
+        cur = cur->next;
+        if( cur->data->key == key ) {
+            cur->data->data;
+        }
+    }
+
+    cur->next = NULL;
+}
 
 JSONElement::JSONElement(){
     type = NULLTYP;
@@ -224,6 +251,10 @@ JSONElement::JSONElement( JSONArray * array ){
 JSONElement::JSONElement( JSONObject * object ){
     type=OBJECT;
     data = object;
+}
+
+void * JSONElement::value(){
+    return data;
 }
 
 JSONElement::~JSONElement(){

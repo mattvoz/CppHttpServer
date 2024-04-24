@@ -13,7 +13,7 @@ enum JSONDataType{ STRING, NUMBER, OBJECT, ARRAY, NULLTYP};
 class JSONArray;
 class JSONObject;
 
-class invalidJSONException: public std::exception{
+class invalidJSONException : public std::exception{
 	public:
 		explicit invalidJSONException( const char * message );
 		virtual const char* what() const throw();
@@ -29,6 +29,15 @@ class JSONElement{
 		JSONElement( std::string );
 		JSONElement( JSONArray *  );
 		JSONElement( JSONObject * );
+	    bool operator==( JSONElement * );
+		bool operator==(JSONElement &);
+		bool operator==(long);
+		bool operator==(int);
+		bool operator==(double);
+		bool operator==( char * );
+		bool operator==(std::string);
+		bool operator==(JSONArray);
+		void * value();
 		~JSONElement();
 	private:
 		friend JSONObject;
@@ -50,30 +59,25 @@ class JSONArray{
 		JSONElement * arr;
 };
 
-/**
- * Uses a hashtable of std::any to store values so casts are required with std::cast_any
-*/
 class JSONObject{
 	public:
 		JSONObject();
-		JSONObject( char * , int objectSize );
-
+		JSONObject(std::string);
 		void put(std::string key, double num);
 		void put(std::string key, std::string );
 		void put(std::string key, JSONArray *);
 		void put(std::string key, JSONObject *);
 		JSONElement* operator[](std::string);
+		JSONElement* operator[](char *);
 		std::string toString();
-		static JSONObject* parseObject( std::string JSONString );
 	private:
 		JSONObject( std::stringstream * sub );
+		void parseString( std::stringstream * );
 		unsigned int hash( std::string );
-		static JSONObject* parseObject( std::stringstream * JSONString );
 		static JSONObject* parseSubObject( std::stringstream * stream);
 		static std::string parseJSONString( std::stringstream * );
-		struct JSONHOLDER ** data;
-		const JSONObject * nullObj = new JSONObject();
-
+		//decided to just use a flat value fo the data array instead of instantaitng a size
+		struct JSONHOLDER* data[100];
 };
 
 #endif
