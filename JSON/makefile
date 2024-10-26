@@ -1,6 +1,6 @@
 lib:	JSON.o
 	ar rs	JSON.a	JSON.o	JSON.h
-test.exe:	JSON.o	test.o
+test:	JSON.o	test.o
 	g++ -g JSON.o test.o -o test.exe
 test.o:	test.cpp	JSON.o
 	g++ -g test.cpp -c
