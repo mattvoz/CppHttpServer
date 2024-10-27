@@ -108,7 +108,7 @@ void JSONObject::parseString(std::stringstream *stream)
             else if (x == '[')
             {
                 stream->putback(x);
-                JSONArray * arr = JSONArray::parseJSONArray(stream);
+                JSONArray *arr = JSONArray::parseJSONArray(stream);
                 this->put(key, arr);
             }
             else if ((x > 0x29 && x < 0x40) || x == '-')
@@ -119,17 +119,22 @@ void JSONObject::parseString(std::stringstream *stream)
                 std::cout << "num string is " << num << "\n";
                 this->put(key, num);
             }
-            else if(x == 'n' || x == 't' || x == 'f')
+            else if (x == 'n' || x == 't' || x == 'f')
             {
                 stream->putback(x);
                 std::string tmpStr;
                 *stream >> tmpStr;
                 std::cout << "string is " << tmpStr;
-                if(tmpStr == "false"){
-                    this->put(key,false);
-                }else if(tmpStr == "true"){
+                if (tmpStr == "false")
+                {
+                    this->put(key, false);
+                }
+                else if (tmpStr == "true")
+                {
                     this->put(key, true);
-                }else if(tmpStr == "null"){
+                }
+                else if (tmpStr == "null")
+                {
                     this->put(key);
                 }
             }
@@ -151,8 +156,6 @@ JSONObject *JSONObject::parseSubObject(std::stringstream *stream)
 {
     return NULL;
 }
-
-
 
 unsigned int JSONObject::hash(std::string key)
 {
@@ -214,12 +217,28 @@ void JSONObject::put(std::string key, std::string val)
 
     while (cur->next != NULL)
     {
-        cur = cur->next;
         if (cur->key == key)
         {
-            cur->data->data;
+            if (cur->data->type != NULLTYP)
+            {
+                delete cur->data->data;
+            }
+            cur->data->data = new std::string(val);
+            cur->data->type = STRING;
             return;
         }
+        cur = cur->next;
+    }
+
+    if (cur->key == key)
+    {
+        if (cur->data->type != NULLTYP)
+        {
+            delete cur->data->data;
+        }
+        cur->data->data = new std::string(val);
+        cur->data->type = STRING;
+        return;
     }
 
     struct JSONHOLDER *holder = new struct JSONHOLDER();
@@ -247,16 +266,28 @@ void JSONObject::put(std::string key, double val)
 
     while (cur->next != NULL)
     {
-        cur = cur->next;
         if (cur->key == key)
         {
-            if( cur->data->type != NULLTYP){
+            if (cur->data->type != NULLTYP)
+            {
                 delete cur->data->data;
             }
             cur->data->data = new double(val);
-            cur->data->type=BOOLEAN;
+            cur->data->type = BOOLEAN;
             return;
         }
+        cur = cur->next;
+    }
+
+    if (cur->key == key)
+    {
+        if (cur->data->type != NULLTYP)
+        {
+            delete cur->data->data;
+        }
+        cur->data->data = new double(val);
+        cur->data->type = BOOLEAN;
+        return;
     }
 
     struct JSONHOLDER *holder = new struct JSONHOLDER();
@@ -284,16 +315,28 @@ void JSONObject::put(std::string key, bool boolean)
 
     while (cur->next != NULL)
     {
-        cur = cur->next;
         if (cur->key == key)
         {
-            if( cur->data->type != NULLTYP){
+            if (cur->data->type != NULLTYP)
+            {
                 delete cur->data->data;
             }
             cur->data->data = new bool(boolean);
             cur->data->type = NUMBER;
             return;
         }
+        cur = cur->next;
+    }
+
+    if (cur->key == key)
+    {
+        if (cur->data->type != NULLTYP)
+        {
+            delete cur->data->data;
+        }
+        cur->data->data = new bool(boolean);
+        cur->data->type = NUMBER;
+        return;
     }
 
     struct JSONHOLDER *holder = new struct JSONHOLDER();
@@ -321,16 +364,28 @@ void JSONObject::put(std::string key, JSONObject *val)
 
     while (cur->next != NULL)
     {
-        cur = cur->next;
         if (cur->key == key)
         {
-            if( cur->data->type != NULLTYP){
+            if (cur->data->type != NULLTYP)
+            {
                 delete cur->data->data;
             }
             cur->data->data = val;
             cur->data->type = OBJECT;
             return;
         }
+        cur = cur->next;
+    }
+
+    if (cur->key == key)
+    {
+        if (cur->data->type != NULLTYP)
+        {
+            delete cur->data->data;
+        }
+        cur->data->data = val;
+        cur->data->type = OBJECT;
+        return;
     }
 
     struct JSONHOLDER *holder = new struct JSONHOLDER();
@@ -358,16 +413,28 @@ void JSONObject::put(std::string key, JSONArray *val)
 
     while (cur->next != NULL)
     {
-        cur = cur->next;
         if (cur->key == key)
         {
-            if( cur->data->type != NULLTYP){
+            if (cur->data->type != NULLTYP)
+            {
                 delete cur->data->data;
             }
             cur->data->data = val;
             cur->data->type = ARRAY;
             return;
         }
+        cur = cur->next;
+    }
+
+    if (cur->key == key)
+    {
+        if (cur->data->type != NULLTYP)
+        {
+            delete cur->data->data;
+        }
+        cur->data->data = val;
+        cur->data->type = ARRAY;
+        return;
     }
 
     struct JSONHOLDER *holder = new struct JSONHOLDER();
@@ -467,13 +534,12 @@ JSONArray::JSONArray(int size)
     arr = std::vector<JSONElement *>(size);
 }
 
-
 JSONArray *JSONArray::parseJSONArray(std::string string)
 {
     return parseJSONArray(new std::stringstream(string));
 }
 
-JSONArray * JSONArray::parseJSONArray(std::stringstream *stream)
+JSONArray *JSONArray::parseJSONArray(std::stringstream *stream)
 {
     bool end = false;
     char x = stream->get();
@@ -502,21 +568,22 @@ JSONArray * JSONArray::parseJSONArray(std::stringstream *stream)
         else if (x == '"')
         {
             std::string str = parseJSONString(stream);
-            arr->arr.push_back( new JSONElement(str) );
+            arr->arr.push_back(new JSONElement(str));
         }
         else if (x == '{')
         {
-            arr->arr.push_back( new JSONElement( JSONObject::parseSubObject(stream) ) );
+            arr->arr.push_back(new JSONElement(JSONObject::parseSubObject(stream)));
         }
         else if (x == '[')
         {
-            arr->arr.push_back( new JSONElement( parseJSONArray(stream) ) );        }
+            arr->arr.push_back(new JSONElement(parseJSONArray(stream)));
+        }
         else if ((x > 0x29 && x < 0x40) || x == '-')
         {
             stream->putback(x);
             double num;
             *stream >> num;
-            arr->arr.push_back( new JSONElement(num) );
+            arr->arr.push_back(new JSONElement(num));
         }
         else if (x == ' ' || x == ',')
         {
@@ -524,12 +591,13 @@ JSONArray * JSONArray::parseJSONArray(std::stringstream *stream)
             // There is a space just continue or we have reached a value split
             continue;
         }
-        else if(x == ']'){
+        else if (x == ']')
+        {
             break;
         }
         else
         {
-            std::string errString = ( ( (std::string() + "UNEXPECTED VALUE GOT IN JSON ARRAY GOT CHAR: ") + x ) + "IN POSITION ") + std::to_string(i);
+            std::string errString = (((std::string() + "UNEXPECTED VALUE GOT IN JSON ARRAY GOT CHAR: ") + x) + "IN POSITION ") + std::to_string(i);
             throw invalidJSONException(errString.c_str());
         }
         i++;
