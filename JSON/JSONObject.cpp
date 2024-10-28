@@ -137,7 +137,7 @@ void JSONObject::parseString(std::stringstream *stream)
                 JSONArray *arr = JSONArray::parseJSONArray(stream);
                 this->put(key, arr);
             }
-            else if ((x > 0x29 && x < 0x40) || x == '-')
+            else if ((x >= 48 && x <= 57) || x == '-')
             {
                 double num;
                 *stream >> num;

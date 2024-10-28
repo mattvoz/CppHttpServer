@@ -1,6 +1,7 @@
 #include "JSON.h"
 #include <sstream>
 #include <iostream>
+#include <stdlib.h>
 
 JSONArray::JSONArray()
 {
@@ -40,6 +41,14 @@ JSONArray *JSONArray::parseJSONArray(std::stringstream *stream)
         curChar = stream->peek();
         std::cout << stream->str() << std::endl;
         printf("got char %c when parsing array int value is %d\n", curChar, curChar);
+        if (curChar == -1)
+        {
+            if(stream->fail()){
+                std::cout << "stream in fail state" << std::endl;
+            }
+
+            continue;
+        }
         if (curChar == ']')
         {
             stream->get();
@@ -52,13 +61,13 @@ JSONArray *JSONArray::parseJSONArray(std::stringstream *stream)
         }
         else if (curChar == '{')
         {
-            arr->arr.push_back(new JSONElement(JSONObject::parseSubObject(stream)));
+            //arr->arr.push_back(new JSONElement(JSONObject::parseSubObject(stream)));
         }
         else if (curChar == '[')
         {
             arr->arr.push_back(new JSONElement(parseJSONArray(stream)));
         }
-        else if ((curChar > 0x29 && curChar < 0x40) || curChar == '-')
+        else if ((curChar >= 48 && curChar <= 57) || curChar == '-')
         {
             double num;
             *stream >> num;
@@ -66,13 +75,13 @@ JSONArray *JSONArray::parseJSONArray(std::stringstream *stream)
         }
         else if (curChar == ' ' || curChar == ',')
         {
-            stream->get();
+            stream->get(curChar);
             // There is a space just continue or we have reached a value split
             continue;
         }
         else
         {
-            std::string errString = (std::string("UNEXPECTED VALUE GOT IN JSON ARRAY GOT CHAR: " ) + curChar + " IN POSITION ") + std::to_string(i);
+            std::string errString = (std::string("UNEXPECTED VALUE GOT IN JSON ARRAY GOT CHAR: ") + curChar + " IN POSITION ") + std::to_string(i);
             throw invalidJSONException(errString.c_str());
         }
         i++;

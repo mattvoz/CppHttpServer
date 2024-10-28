@@ -3,7 +3,7 @@
 
 int main() {
     try{
-        const char * string = "{\"hi\" : \"hey\", \"testtwo\": null, \"num\": -123, \"test\": [\"hi\", \"hello\", \"hi there\", {\"test\": 123}]}";
+        const char * string = "{\"hi\" : \"hey\", \"testtwo\": null, \"num\": -123, \"test\": [\"hi\", 1234]}";
         printf("length %d", strlen(string));
         JSONObject object = JSONObject(string);
         JSONElement * x = object["num"];
