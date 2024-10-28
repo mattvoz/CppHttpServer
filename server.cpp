@@ -214,7 +214,7 @@ void readRequest( void * threadData ) {
         }
 
         buffSize = bytesRecieved;
-        if( realloc( recBuf, sizeof(char) * buffSize) == NULL) {
+        if( ( recBuf = (char *) realloc( recBuf, sizeof(char) * buffSize) ) == NULL) {
             printf("failed to update size of headers buffer canceling request\n");
             closesocket( threadInfo->client );
             return;
