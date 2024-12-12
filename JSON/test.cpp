@@ -6,8 +6,9 @@ int main() {
         const char * string = "{\"hi\" : \"hey\", \"testtwo\": null, \"num\": -123, \"test\": [\"hi\", 1234]}";
         printf("length %d", strlen(string));
         JSONObject object = JSONObject(string);
-        JSONElement * x = object["num"];
-        std::cout <<  *(double *)x->value() << std::endl;
+        JSONElement * x = object["hi"];
+        std::cout << "got object " << x << std::endl;
+        std::cout << "does x = hi? " << (x == "hi") << std::endl;
     }catch(invalidJSONException e ) {
         std::cout << "Caught exception" << e.what();
     }

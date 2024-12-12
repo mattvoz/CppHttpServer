@@ -42,9 +42,160 @@ void *JSONElement::value()
 
 JSONElement::~JSONElement()
 {
-    if (type == NULLTYP)
-    {
-        return;
+    switch(type){
+        case NULLTYP:
+            return;
+          break;
+          case STRING:
+            delete ((std::string * ) data);
+          case NUMBER:
+            delete ((double * ) data);
+          break;
+          case OBJECT:
+            delete ((JSONObject * ) data);
+          case ARRAY:
+            delete ((JSONArray * ) data);
+          case BOOLEAN:
+            delete ((bool * ) data);
+          default:
+          // something went terribly wrong if the type isn't set so kill the program for now 
+          //TODO throw an exception or something
+          exit(-1);
+            break;
     }
-    delete (data);
+}
+
+void * JSONElement::operator[](std::string key){
+    switch( this->type ){
+        case STRING:
+            throw new invalidJSONException("String type does not have access by value");
+          break;
+        case NUMBER:
+            throw new invalidJSONException("Number type does not have access by value");
+          break;
+        case OBJECT:
+            return (*(JSONObject *) data)[key];
+          break;
+        case ARRAY:
+        {
+            int arrIndex = -1;
+
+            try{
+                arrIndex = std::stoi(key);
+            }catch( std::exception ex ){}
+
+            if(arrIndex < 0) {
+                throw new invalidJSONException("ARRAY type does not have access by string value");
+            }
+
+            return ( * (JSONArray *) data)[arrIndex];
+          break;
+        }
+        case BOOLEAN:
+            throw new invalidJSONException("BOOLEAN type does not have access by value");
+          break;
+        case NULLTYP:
+            throw new invalidJSONException("NULL type does not have access by value");
+          break;
+    }
+
+    return NULL;
+}
+
+void * JSONElement::operator[](char * index){
+    std::string key = std::string(index);
+       switch( this->type ){
+        case STRING:
+            throw new invalidJSONException("String type does not have access by value");
+          break;
+        case NUMBER:
+            throw new invalidJSONException("Number type does not have access by value");
+          break;
+        case OBJECT:
+            return (*(JSONObject *) data)[key];
+          break;
+        case ARRAY:
+        {
+            int arrIndex = -1;
+
+            try{
+                arrIndex = std::stoi(key);
+            }catch( std::exception ex ){}
+
+            if(arrIndex < 0) {
+                throw new invalidJSONException("ARRAY type does not have access by string value");
+            }
+
+            return ( * (JSONArray *) data)[arrIndex];
+          break;
+        }
+        case BOOLEAN:
+            throw new invalidJSONException("BOOLEAN type does not have access by value");
+          break;
+        case NULLTYP:
+            throw new invalidJSONException("NULL type does not have access by value");
+          break;
+    }
+
+    return NULL;
+}
+
+// TODO all teh following :)
+bool JSONElement::operator==(JSONElement * comp){
+    if( this->type != comp->type){
+        return false;
+    }
+           switch( this->type ){
+        case STRING:
+            return (*(std::string *) data) == (*(std::string *) comp->data);
+          break;
+        case NUMBER:
+            return (*(double *) data) == (*(double *) comp->data);
+          break;
+        case OBJECT:
+            //just compare addresses of the object if they are the same address same object don't do deep compare at this time.
+            return (JSONObject *) data == (JSONObject *) comp->data;
+          break;
+        case ARRAY:
+            return (*(JSONArray *) data) == (*(JSONArray *) comp->data);
+        case BOOLEAN:
+            return (*(bool *) data) == (*(bool *) comp->data);
+          break;
+        case NULLTYP:
+            // if we have a nulltyp and the type matches they must be equal in value :)
+            return true;
+          break;
+    }
+}
+
+bool JSONElement::operator==(JSONElement &){
+    return false;
+}
+
+bool JSONElement::operator==(long){
+    return false;
+}
+
+bool JSONElement::operator==(int){
+    return false;
+}
+
+bool JSONElement::operator==(double){
+    return false;
+}
+
+bool JSONElement::operator==(bool){
+    return false;
+}
+
+bool JSONElement::operator==(char *){
+    return false;
+}
+
+bool JSONElement::operator==(std::string){
+    return false;
+}
+
+bool JSONElement::operator==(JSONArray){
+    return false;
 }

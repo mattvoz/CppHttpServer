@@ -230,6 +230,7 @@ void readRequest( void * threadData ) {
         threadInfo->headers = recBuf;
         threadInfo->size = bytesRecieved;
 
+        //Todo figure out how to keep connection open for http 1.1
         parseRequest( threadInfo );
 }
 

@@ -3,3 +3,4 @@ server.o
 *.o
 *.gch
 *.exe
+*.a

@@ -64,7 +64,9 @@ public:
 	bool operator==(char *);
 	bool operator==(std::string);
 	bool operator==(JSONArray);
-	void *value();
+	void * operator[](std::string);
+	void * operator[](char *);
+	void * value();
 	~JSONElement();
 
 private:
