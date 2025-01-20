@@ -1,7 +1,12 @@
+CURRENT_DIRECTORY=$(CURDIR)
+
+LIBS = -L$(CURDIR)/JSON
+INCLUDES = -I$(CURDIR)/JSON
+
 main.exe:	httpRequest.o	httpResponse.o	server.o	test.cpp	PathTree.o
-	g++	*.o	test.cpp	-o main.exe	-lws2_32
+	g++	*.o	test.cpp	-o main.exe	$(LIBS) -lJSON $(INCLUDES) -lws2_32
 server.o:	server.cpp	server.h hash.h
-	g++	server.cpp	-c
+	g++	server.cpp	$(INCLUDES)	$(LIBS)	-lJSON -c
 httpResponse.o:	httpResponse.cpp httpResponse.h hash.h
 	g++ httpResponse.cpp -c
 httpRequest.o:	httpRequest.cpp	httpRequest.h	hash.h

@@ -219,7 +219,7 @@ void JSONObject::put(std::string key, std::string val)
         {
             if (cur->data->type != NULLTYP)
             {
-                delete cur->data->data;
+                deleteType( cur->data->data, cur->data->type );
             }
             cur->data->data = new std::string(val);
             cur->data->type = STRING;
@@ -232,7 +232,7 @@ void JSONObject::put(std::string key, std::string val)
     {
         if (cur->data->type != NULLTYP)
         {
-            delete cur->data->data;
+            deleteType( cur->data->data, cur->data->type );
         }
         cur->data->data = new std::string(val);
         cur->data->type = STRING;
@@ -268,10 +268,10 @@ void JSONObject::put(std::string key, double val)
         {
             if (cur->data->type != NULLTYP)
             {
-                delete cur->data->data;
+                deleteType( cur->data->data, cur->data->type );
             }
             cur->data->data = new double(val);
-            cur->data->type = BOOLEAN;
+            cur->data->type = NUMBER;
             return;
         }
         cur = cur->next;
@@ -281,10 +281,10 @@ void JSONObject::put(std::string key, double val)
     {
         if (cur->data->type != NULLTYP)
         {
-            delete cur->data->data;
+            deleteType( cur->data->data, cur->data->type );
         }
         cur->data->data = new double(val);
-        cur->data->type = BOOLEAN;
+        cur->data->type = NUMBER;
         return;
     }
 
@@ -317,10 +317,10 @@ void JSONObject::put(std::string key, bool boolean)
         {
             if (cur->data->type != NULLTYP)
             {
-                delete cur->data->data;
+                deleteType( cur->data->data, cur->data->type );
             }
             cur->data->data = new bool(boolean);
-            cur->data->type = NUMBER;
+            cur->data->type = JSON_BOOLEAN;
             return;
         }
         cur = cur->next;
@@ -330,10 +330,10 @@ void JSONObject::put(std::string key, bool boolean)
     {
         if (cur->data->type != NULLTYP)
         {
-            delete cur->data->data;
+            deleteType( cur->data->data, cur->data->type );
         }
         cur->data->data = new bool(boolean);
-        cur->data->type = NUMBER;
+        cur->data->type = JSON_BOOLEAN;
         return;
     }
 
@@ -366,7 +366,7 @@ void JSONObject::put(std::string key, JSONObject *val)
         {
             if (cur->data->type != NULLTYP)
             {
-                delete cur->data->data;
+                deleteType( cur->data->data, cur->data->type );
             }
             cur->data->data = val;
             cur->data->type = OBJECT;
@@ -379,7 +379,7 @@ void JSONObject::put(std::string key, JSONObject *val)
     {
         if (cur->data->type != NULLTYP)
         {
-            delete cur->data->data;
+            deleteType( cur->data->data, cur->data->type );
         }
         cur->data->data = val;
         cur->data->type = OBJECT;
@@ -415,7 +415,7 @@ void JSONObject::put(std::string key, JSONArray *val)
         {
             if (cur->data->type != NULLTYP)
             {
-                delete cur->data->data;
+                deleteType( cur->data->data, cur->data->type );
             }
             cur->data->data = val;
             cur->data->type = ARRAY;
@@ -428,7 +428,7 @@ void JSONObject::put(std::string key, JSONArray *val)
     {
         if (cur->data->type != NULLTYP)
         {
-            delete cur->data->data;
+            deleteType( cur->data->data, cur->data->type );
         }
         cur->data->data = val;
         cur->data->type = ARRAY;
@@ -474,4 +474,21 @@ void JSONObject::put(std::string key)
     holder->next = NULL;
 
     cur->next = holder;
+}
+
+void deleteType( void * data, JSONDataType type){
+    switch(type){
+        case JSON_BOOLEAN:
+            delete ((bool *) data);
+            break;
+        case NUMBER:
+            delete ((double *) data);
+            break;
+        case OBJECT:
+            delete ((JSONObject *) data);
+            break;
+        case ARRAY:
+            delete ((JSONArray *) data);
+            break;
+    }
 }

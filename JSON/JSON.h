@@ -19,7 +19,7 @@ enum JSONDataType
 	NUMBER,
 	OBJECT,
 	ARRAY,
-	BOOLEAN,
+	JSON_BOOLEAN,
 	NULLTYP
 };
 
@@ -73,6 +73,7 @@ private:
 	friend JSONObject;
 	void *data;
 	JSONDataType type;
+	bool compare( JSONElement * comp );
 };
 
 struct JSONHOLDER
@@ -181,5 +182,7 @@ static std::string parseJSONString(std::stringstream *stream)
     std::cout << "RETURNING STRING " << returnString << "\n";
     return returnString;
 }
+
+void deleteType( void * , JSONDataType );
 
 #endif

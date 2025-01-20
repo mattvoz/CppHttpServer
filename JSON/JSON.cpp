@@ -15,7 +15,7 @@ JSONElement::JSONElement(double num)
 }
 JSONElement::JSONElement(bool boolean)
 {
-    type = BOOLEAN;
+    type = JSON_BOOLEAN;
     data = new bool(boolean);
 }
 JSONElement::JSONElement(std::string string)
@@ -35,7 +35,7 @@ JSONElement::JSONElement(JSONObject *object)
     data = object;
 }
 
-void *JSONElement::value()
+void * JSONElement::value()
 {
     return data;
 }
@@ -55,7 +55,7 @@ JSONElement::~JSONElement()
             delete ((JSONObject * ) data);
           case ARRAY:
             delete ((JSONArray * ) data);
-          case BOOLEAN:
+          case JSON_BOOLEAN:
             delete ((bool * ) data);
           default:
           // something went terribly wrong if the type isn't set so kill the program for now 
@@ -91,7 +91,7 @@ void * JSONElement::operator[](std::string key){
             return ( * (JSONArray *) data)[arrIndex];
           break;
         }
-        case BOOLEAN:
+        case JSON_BOOLEAN:
             throw new invalidJSONException("BOOLEAN type does not have access by value");
           break;
         case NULLTYP:
@@ -129,7 +129,7 @@ void * JSONElement::operator[](char * index){
             return ( * (JSONArray *) data)[arrIndex];
           break;
         }
-        case BOOLEAN:
+        case JSON_BOOLEAN:
             throw new invalidJSONException("BOOLEAN type does not have access by value");
           break;
         case NULLTYP:
@@ -145,7 +145,74 @@ bool JSONElement::operator==(JSONElement * comp){
     if( this->type != comp->type){
         return false;
     }
-           switch( this->type ){
+
+    return compare(comp);
+}
+
+bool JSONElement::operator==(JSONElement & comp){
+        if( this->type != comp.type){
+        return false;
+    }
+
+    return compare(&comp);
+}
+
+bool JSONElement::operator==(long comp){
+    if( this->type != NUMBER){
+      return false;
+    }
+    return (*(double *) data) ==  comp;
+}
+
+bool JSONElement::operator==(int comp){
+    if( this->type != NUMBER){
+      return false;
+    }
+    return (*(double *) data) == comp;
+}
+
+bool JSONElement::operator==(double comp){
+    if( this->type != NUMBER){
+      return false;
+    }
+    return (*(double *) data) == comp;
+}
+
+bool JSONElement::operator==(bool comp){
+    if( this->type != JSON_BOOLEAN ){
+      return false;
+    }
+
+    return (*(bool *) data) == comp;
+}
+
+bool JSONElement::operator==(char * comp){
+    if( this->type != STRING ){
+      return false;
+    }
+
+    return (*(std::string *) data) == std::string(comp);
+}
+
+bool JSONElement::operator==(std::string comp){
+    if( this->type != STRING ){
+      return false;
+    }
+
+    return (*(std::string *) data) == comp;
+}
+
+// Not sure what JSON specification is for comparing arrays marking as TODO
+//TODO
+bool JSONElement::operator==(JSONArray){
+    return false;
+}
+
+bool JSONElement::compare( JSONElement * comp ){
+    if( this->type != comp->type){
+        return false;
+    }
+    switch( this->type ){
         case STRING:
             return (*(std::string *) data) == (*(std::string *) comp->data);
           break;
@@ -157,8 +224,8 @@ bool JSONElement::operator==(JSONElement * comp){
             return (JSONObject *) data == (JSONObject *) comp->data;
           break;
         case ARRAY:
-            return (*(JSONArray *) data) == (*(JSONArray *) comp->data);
-        case BOOLEAN:
+            return false;
+        case JSON_BOOLEAN:
             return (*(bool *) data) == (*(bool *) comp->data);
           break;
         case NULLTYP:
@@ -166,36 +233,6 @@ bool JSONElement::operator==(JSONElement * comp){
             return true;
           break;
     }
-}
 
-bool JSONElement::operator==(JSONElement &){
-    return false;
-}
-
-bool JSONElement::operator==(long){
-    return false;
-}
-
-bool JSONElement::operator==(int){
-    return false;
-}
-
-bool JSONElement::operator==(double){
-    return false;
-}
-
-bool JSONElement::operator==(bool){
-    return false;
-}
-
-bool JSONElement::operator==(char *){
-    return false;
-}
-
-bool JSONElement::operator==(std::string){
-    return false;
-}
-
-bool JSONElement::operator==(JSONArray){
     return false;
 }

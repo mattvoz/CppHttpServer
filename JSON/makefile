@@ -1,5 +1,5 @@
 lib:	JSON.o	JSONObject.o	JSON.h	
-	ar rs	JSON.a	JSON.o	JSON.h
+	ar rs	libJSON.a	JSON.o	JSON.h
 
 test:	JSON.o	JSONObject.o	JSONArray.o	test.o
 	g++ -g JSON.o 	JSONObject.o	JSONArray.o	test.o -o test.exe
